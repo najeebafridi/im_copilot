@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+pydantic-settings
+python-dotenv
+pytest
+httpx
+sqlalchemy
+passlib[bcrypt]
+bcrypt==4.0.1
+python-jose[cryptography]
+chromadb
+pdfplumber
+python-docx
+reportlab

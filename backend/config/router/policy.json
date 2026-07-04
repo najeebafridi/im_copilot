@@ -1,0 +1,63 @@
+{
+  "intent": "POLICY",
+  "groups": [
+    {
+      "id": "attendance_policy",
+      "weight": 10,
+      "keywords": [
+        "attendance policy",
+        "attendance rule",
+        "attendance requirement"
+      ]
+    },
+    {
+      "id": "fees",
+      "weight": 8,
+      "keywords": [
+        "fee",
+        "fees",
+        "late fee",
+        "refund"
+      ]
+    },
+    {
+      "id": "scholarship",
+      "weight": 8,
+      "keywords": [
+        "scholarship",
+        "financial aid"
+      ]
+    },
+    {
+      "id": "registration",
+      "weight": 8,
+      "keywords": [
+        "withdrawal",
+        "freeze semester",
+        "course registration"
+      ]
+    },
+    {
+      "id": "discipline",
+      "weight": 8,
+      "keywords": [
+        "probation",
+        "disciplinary",
+        "plagiarism"
+      ]
+    },
+    {
+      "id": "general",
+      "weight": 6,
+      "keywords": [
+        "policy",
+        "rule",
+        "regulation",
+        "procedure",
+        "eligibility",
+        "document",
+        "handbook"
+      ]
+    }
+  ]
+}

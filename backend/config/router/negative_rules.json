@@ -1,0 +1,24 @@
+{
+  "rules": [
+    {
+      "if_contains": [
+        "policy",
+        "rule",
+        "regulation",
+        "requirement"
+      ],
+      "prefer": "POLICY"
+    },
+    {
+      "if_contains": [
+        "my",
+        "cgpa",
+        "attendance",
+        "grades",
+        "timetable",
+        "profile"
+      ],
+      "prefer": "ACADEMIC"
+    }
+  ]
+}

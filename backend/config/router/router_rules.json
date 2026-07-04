@@ -1,0 +1,13 @@
+{
+  "priority": [
+    "GREETING",
+    "ACADEMIC",
+    "POLICY",
+    "UNKNOWN"
+  ],
+  "minimum_confidence": 5,
+  "primary_keyword_weight": 5,
+  "alias_weight": 4,
+  "example_weight": 2,
+  "group_bonus": 2
+}

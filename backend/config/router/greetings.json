@@ -1,0 +1,13 @@
+{
+  "intent": "GREETING",
+  "keywords": [
+    "hi",
+    "hello",
+    "hey",
+    "assalamualaikum",
+    "salam",
+    "good morning",
+    "thanks",
+    "bye"
+  ]
+}

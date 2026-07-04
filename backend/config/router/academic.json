@@ -1,0 +1,85 @@
+{
+  "intent": "ACADEMIC",
+  "groups": [
+    {
+      "id": "profile",
+      "weight": 6,
+      "keywords": [
+        "profile",
+        "student profile",
+        "student id",
+        "semester",
+        "program",
+        "department"
+      ],
+      "aliases": [
+        "my profile"
+      ],
+      "examples": [
+        "Show my profile"
+      ]
+    },
+    {
+      "id": "cgpa",
+      "weight": 10,
+      "keywords": [
+        "cgpa",
+        "gpa",
+        "grade point average",
+        "current cgpa"
+      ],
+      "aliases": [
+        "grades average"
+      ],
+      "examples": [
+        "What is my CGPA?"
+      ]
+    },
+    {
+      "id": "attendance",
+      "weight": 9,
+      "keywords": [
+        "attendance",
+        "attendance percentage",
+        "attendance record",
+        "overall attendance",
+        "lowest attendance",
+        "highest attendance"
+      ],
+      "examples": [
+        "Attendance in AI"
+      ]
+    },
+    {
+      "id": "grades",
+      "weight": 8,
+      "keywords": [
+        "grades",
+        "marks",
+        "results",
+        "score",
+        "performance"
+      ]
+    },
+    {
+      "id": "courses",
+      "weight": 8,
+      "keywords": [
+        "courses",
+        "subjects",
+        "registered courses",
+        "enrolled courses"
+      ]
+    },
+    {
+      "id": "timetable",
+      "weight": 8,
+      "keywords": [
+        "timetable",
+        "schedule",
+        "routine",
+        "class timing"
+      ]
+    }
+  ]
+}

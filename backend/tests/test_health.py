@@ -1,0 +1,18 @@
+"""Tests for the health endpoint."""
+
+import pytest
+from httpx import ASGITransport, AsyncClient
+
+from app.main import app
+
+
+@pytest.mark.anyio
+async def test_health_endpoint() -> None:
+    """The health endpoint should return the expected payload."""
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get("/api/v1/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok", "project": "IM Copilot"}

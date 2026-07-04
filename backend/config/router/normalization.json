@@ -1,0 +1,6 @@
+{
+  "lowercase": true,
+  "remove_punctuation": true,
+  "collapse_spaces": true,
+  "trim": true
+}
