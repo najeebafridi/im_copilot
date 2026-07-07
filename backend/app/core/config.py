@@ -31,6 +31,12 @@ class Settings(BaseSettings):
     ENABLE_CACHE: bool = True
     CACHE_SIZE: int = 100
     ROUTER_DEBUG: bool = False
+    CHAT_MEMORY_ENABLED: bool = True
+    CHAT_TTL_HOURS: int = 24
+    CHAT_MAX_CONVERSATIONS_PER_USER: int = 30
+    CHAT_MAX_MESSAGES_PER_CONVERSATION: int = 200
+    CHAT_CLEANUP_INTERVAL_MINUTES: int = 30
+    CHAT_MAX_TITLE_LENGTH: int = 40
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -15,6 +15,7 @@ os.environ.setdefault("JWT_ALGORITHM", "HS256")
 os.environ.setdefault("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
 
 from app.core.database import engine
+from app.services.conversation.service import get_conversation_service
 from app.services.seed_service import seed_database
 
 
@@ -31,3 +32,13 @@ def prepare_test_database() -> None:
     engine.dispose()
     if TEST_DB_PATH.exists():
         TEST_DB_PATH.unlink()
+
+
+@pytest.fixture(autouse=True)
+def reset_conversation_memory() -> None:
+    """Ensure in-memory conversations do not leak between tests."""
+
+    service = get_conversation_service()
+    service.reset()
+    yield
+    service.reset()

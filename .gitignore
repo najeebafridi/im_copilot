@@ -63,3 +63,10 @@ Thumbs.db
 node_modules/
 dist/
 build/
+
+
+# Generated pipeline outputs
+backend/processed/*.json
+
+
+cmmands.txt

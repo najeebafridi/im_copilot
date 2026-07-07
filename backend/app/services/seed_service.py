@@ -17,6 +17,7 @@ from app.models.timetable import Timetable
 from app.models.user import User
 
 DEFAULT_PASSWORD = "password123"
+ADMIN_PASSWORD = "admin123"
 
 
 @dataclass(frozen=True)
@@ -54,6 +55,13 @@ STUDENTS: list[StudentSeed] = [
     StudentSeed("DS020", "Maha Zubair", "maha.zubair@example.edu", "BS Data Science", 5, 3.83),
 ]
 
+ADMIN_USER = {
+    "student_id": "admin",
+    "name": "Administrator",
+    "email": "admin@example.edu",
+    "role": "admin",
+}
+
 COURSES = [
     ("DS301", "Data Mining", 3),
     ("DS302", "Machine Learning", 3),
@@ -83,6 +91,7 @@ def seed_database() -> None:
     try:
         _seed_courses(db)
         _seed_students_and_users(db)
+        _seed_admin_user(db)
         db.commit()
         print("[SEED] database rows committed")
     finally:
@@ -157,3 +166,16 @@ def _seed_students_and_users(db: Session) -> None:
                     room=room,
                 )
             )
+
+
+def _seed_admin_user(db: Session) -> None:
+    """Insert the built-in administrator account."""
+
+    admin_user = User(
+        student_id=ADMIN_USER["student_id"],
+        name=ADMIN_USER["name"],
+        email=ADMIN_USER["email"],
+        password_hash=hash_password(ADMIN_PASSWORD),
+        role=ADMIN_USER["role"],
+    )
+    db.add(admin_user)

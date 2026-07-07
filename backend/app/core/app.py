@@ -15,6 +15,7 @@ from app.api.router import api_router
 from app.core.config import get_settings
 from app.core.database import init_db
 from app.core.logging import configure_logging
+from app.services.conversation.scheduler import get_conversation_cleanup_scheduler
 from app.services.llm.exceptions import LLMConfigurationError, LLMProviderError, LLMResponseValidationError
 from app.services.router.exceptions import RouterConfigurationError
 from app.services.router.router_service import get_router_service
@@ -29,9 +30,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         get_router_service()
     except RouterConfigurationError:
         logging.getLogger(__name__).exception("Router configuration failed to load during startup")
+    get_conversation_cleanup_scheduler().start()
     logging.getLogger(__name__).info("Application startup complete")
     print("[APP] startup complete")
     yield
+    get_conversation_cleanup_scheduler().stop()
 
 
 def create_app() -> FastAPI:
