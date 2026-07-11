@@ -1,11 +1,25 @@
-"""Config-driven intent classification for the Phase 7A router."""
+"""LLM-backed intent classification for the router."""
 
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass
+from functools import lru_cache
+from typing import Final
 
-from app.services.router.config_loader import IntentConfig, NormalizationConfig, RouterConfig, RouterRulesConfig
+from app.services.llm.exceptions import LLMConfigurationError, LLMProviderError
+from app.services.llm.llm_service import LLMService
+from app.services.router.query_normalizer import normalize_query
+
+logger = logging.getLogger(__name__)
+
+SUPPORTED_INTENTS: Final[tuple[str, ...]] = ("SQL", "RAG", "GENERAL")
+INTENT_TO_NODE: Final[dict[str, str]] = {
+    "SQL": "ACADEMIC",
+    "RAG": "POLICY",
+    "GENERAL": "GREETING",
+}
 
 
 @dataclass(slots=True)
@@ -18,7 +32,7 @@ class NormalizedQuery:
 
 @dataclass(slots=True)
 class RouterClassification:
-    """Classification output before negative-rule and priority resolution."""
+    """Compatibility wrapper used by the router debug payload."""
 
     intent: str
     confidence: int
@@ -29,173 +43,88 @@ class RouterClassification:
     tokens: list[str]
 
 
-class IntentClassifier:
-    """Score the supported intents using only loaded JSON configuration."""
+@dataclass(slots=True)
+class IntentClassificationResult:
+    """Internal result returned by the LLM classifier."""
 
-    def __init__(self, config: RouterConfig) -> None:
-        self.config = config
+    intents: list[str]
+    raw_response: str
+
+
+class IntentClassifier:
+    """Compatibility class that now uses the LLM-backed classifier."""
+
+    def __init__(self, _config: object | None = None) -> None:
+        self.config = _config
 
     def normalize(self, query: str) -> NormalizedQuery:
-        """Normalize a query using the configured operations."""
+        """Keep the existing helper shape for compatibility."""
 
-        text = query
-        normalization = self.config.normalization
-
-        if normalization.lowercase:
-            text = text.lower()
-        if normalization.remove_punctuation:
-            text = re.sub(r"[^\w\s]", " ", text)
-        if normalization.collapse_spaces:
-            text = re.sub(r"\s+", " ", text)
-        if normalization.trim:
-            text = text.strip()
-
-        tokens = [token for token in text.split() if token and token not in self.config.stopwords]
-        return NormalizedQuery(normalized_query=text, tokens=tokens)
+        normalized = normalize_query(query)
+        return NormalizedQuery(normalized_query=normalized, tokens=normalized.split())
 
     def classify(self, query: str) -> RouterClassification:
-        """Return intent scores and matched keywords for a question."""
+        """Return a compatibility classification object."""
 
         normalized = self.normalize(query)
-        rules = self.config.router_rules
-
-        scores: dict[str, int] = {intent: 0 for intent in self._supported_intents()}
-        matched_keywords: list[str] = []
-
-        for intent_name, intent_config in self.config.intents.items():
-            if intent_name == "GREETING":
-                score, matches = self._score_keywords(
-                    normalized.normalized_query,
-                    normalized.tokens,
-                    intent_config.keywords,
-                    rules.primary_keyword_weight,
-                )
-                scores[intent_name] = score
-                self._extend_unique(matched_keywords, matches)
-                continue
-
-            intent_score = 0
-            intent_matches: list[str] = []
-
-            for group in intent_config.groups:
-                group_score = 0
-                group_matches: list[str] = []
-
-                keyword_score, keyword_matches = self._score_keywords(
-                    normalized.normalized_query,
-                    normalized.tokens,
-                    group.keywords,
-                    rules.primary_keyword_weight,
-                )
-                alias_score, alias_matches = self._score_keywords(
-                    normalized.normalized_query,
-                    normalized.tokens,
-                    group.aliases,
-                    rules.alias_weight,
-                )
-                example_score, example_matches = self._score_keywords(
-                    normalized.normalized_query,
-                    normalized.tokens,
-                    group.examples,
-                    rules.example_weight,
-                )
-
-                group_score += keyword_score + alias_score + example_score
-                if keyword_matches or alias_matches or example_matches:
-                    group_score += rules.group_bonus
-                    group_matches.extend(keyword_matches)
-                    group_matches.extend(alias_matches)
-                    group_matches.extend(example_matches)
-
-                if group_matches:
-                    intent_score += group_score + group.weight
-                    intent_matches.extend(group_matches)
-
-            if intent_config.keywords:
-                keyword_score, keyword_matches = self._score_keywords(
-                    normalized.normalized_query,
-                    normalized.tokens,
-                    intent_config.keywords,
-                    rules.primary_keyword_weight,
-                )
-                intent_score += keyword_score
-                intent_matches.extend(keyword_matches)
-
-            scores[intent_name] = intent_score
-            self._extend_unique(matched_keywords, intent_matches)
-
-        selected_intent = self._select_highest_scoring_intent(scores, rules)
-        confidence = scores.get(selected_intent, 0)
-        reason = self._build_reason(selected_intent, confidence, matched_keywords)
+        intents = classify_intents(normalized.normalized_query)
+        selected_intent = intents[0] if intents else "GENERAL"
+        selected_node = INTENT_TO_NODE.get(selected_intent, "GREETING")
+        node_scores = {node: 0 for node in ("GREETING", "ACADEMIC", "POLICY", "UNKNOWN")}
+        node_scores[selected_node] = 100
 
         return RouterClassification(
-            intent=selected_intent,
-            confidence=confidence,
-            scores=scores,
-            matched_keywords=matched_keywords,
-            reason=reason,
+            intent=selected_node,
+            confidence=100,
+            scores=node_scores,
+            matched_keywords=normalized.tokens,
+            reason=f"Detected intents: {','.join(intents) if intents else 'GENERAL'}.",
             normalized_query=normalized.normalized_query,
             tokens=normalized.tokens,
         )
 
-    def _score_keywords(
-        self,
-        normalized_query: str,
-        tokens: list[str],
-        keywords: list[str],
-        weight: int,
-    ) -> tuple[int, list[str]]:
-        """Score keyword phrases against the normalized query."""
 
-        score = 0
-        matches: list[str] = []
-        token_set = set(tokens)
+def classify_intents(query: str) -> list[str]:
+    """Classify a query into one or more supported routing intents."""
 
-        for keyword in keywords:
-            if " " in keyword:
-                if keyword in normalized_query:
-                    score += weight
-                    matches.append(keyword)
-            elif keyword in token_set:
-                score += weight
-                matches.append(keyword)
+    result = _classify_intents(query)
+    return result.intents
 
-        return score, matches
 
-    def _select_highest_scoring_intent(self, scores: dict[str, int], rules: RouterRulesConfig) -> str:
-        """Choose the best intent using confidence and configured priority."""
+@lru_cache(maxsize=1)
+def _get_llm_service() -> LLMService:
+    """Create and cache the shared LLM service."""
 
-        highest_score = max(scores.values()) if scores else 0
-        if highest_score < rules.minimum_confidence:
-            return "UNKNOWN"
+    return LLMService.from_settings()
 
-        top_intents = [intent for intent, score in scores.items() if score == highest_score]
-        if len(top_intents) == 1:
-            return top_intents[0]
 
-        for preferred_intent in rules.priority:
-            if preferred_intent in top_intents:
-                return preferred_intent
+def _classify_intents(query: str) -> IntentClassificationResult:
+    """Run the lightweight classifier prompt and parse the response."""
 
-        return top_intents[0]
+    llm_service = _get_llm_service()
+    generation = llm_service.generate_with_metadata(message=query, prompt_name="intent_classifier")
+    intents = _parse_intents(generation.response.response)
+    if not intents:
+        intents = ["GENERAL"]
 
-    def _build_reason(self, intent: str, confidence: int, matched_keywords: list[str]) -> str:
-        """Create a short explanation for the selected intent."""
+    return IntentClassificationResult(intents=intents, raw_response=generation.response.response)
 
-        if intent == "UNKNOWN":
-            return "No intent reached the minimum confidence threshold."
-        if matched_keywords:
-            return f"Matched {intent.lower()} keywords with confidence {confidence}."
-        return f"Selected {intent.lower()} by score."
 
-    def _extend_unique(self, target: list[str], values: list[str]) -> None:
-        """Append items while preserving order and avoiding duplicates."""
+def _parse_intents(raw_response: str) -> list[str]:
+    """Parse a comma-separated intent response safely."""
 
-        for value in values:
-            if value not in target:
-                target.append(value)
+    matches = re.findall(r"\b(SQL|RAG|GENERAL)\b", raw_response.upper())
+    ordered: list[str] = []
+    for match in matches:
+        if match not in ordered:
+            ordered.append(match)
+    return ordered
 
-    def _supported_intents(self) -> list[str]:
-        """Return the intents that are scored in debug output."""
 
-        return [intent for intent in self.config.intents if intent != "UNKNOWN"]
+__all__ = [
+    "IntentClassifier",
+    "IntentClassificationResult",
+    "NormalizedQuery",
+    "RouterClassification",
+    "classify_intents",
+]

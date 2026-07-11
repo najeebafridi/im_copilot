@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import logging
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache
 
 from app.core.config import get_settings
 from app.services.router.config_loader import RouterConfig, get_router_config
-from app.services.router.intent_classifier import IntentClassifier, RouterClassification
+from app.services.router.intent_classifier import RouterClassification, classify_intents
 from app.services.router.query_normalizer import normalize_query
 
 logger = logging.getLogger(__name__)
@@ -24,6 +24,8 @@ class RouterDecision:
     selected_node: str
     routing_time_ms: int
     debug_enabled: bool
+    detected_intents: list[str] = field(default_factory=list)
+    multiple_intents: bool = False
 
     def debug_payload(self) -> dict[str, object] | None:
         """Return the optional debug payload."""
@@ -46,38 +48,39 @@ class RouterService:
     def __init__(self, config: RouterConfig, debug_enabled: bool) -> None:
         self.config = config
         self.debug_enabled = debug_enabled
-        self.classifier = IntentClassifier(config)
 
     def route(self, question: str) -> RouterDecision:
         """Return the selected intent and node for a user question."""
 
         start = time.perf_counter()
         normalized_question = normalize_query(question)
-        classification = self.classifier.classify(normalized_question)
-        selected_intent = self._apply_negative_rules(classification)
+        detected_intents = [intent.upper().strip() for intent in classify_intents(normalized_question) if intent.strip()]
+        if not detected_intents:
+            detected_intents = ["GENERAL"]
+
+        selected_label = detected_intents[0]
+        selected_intent = self._intent_to_node_key(selected_label)
         selected_node = self._intent_to_node(selected_intent)
-        final_confidence = classification.scores.get(selected_intent, classification.confidence)
-        classification.intent = selected_intent
-        classification.confidence = final_confidence
+        classification = self._build_classification(normalized_question, detected_intents, selected_intent)
         routing_time_ms = int((time.perf_counter() - start) * 1000)
 
         if get_settings().DEBUG:
             logger.info(
-                "Router question=%s normalized=%s matched_keywords=%s scores=%s confidence=%s selected_intent=%s selected_node=%s routing_time_ms=%s",
+                "Router question=%s normalized=%s detected_intents=%s selected_intent=%s selected_node=%s routing_time_ms=%s",
                 question,
                 normalized_question,
-                classification.matched_keywords,
-                classification.scores,
-                final_confidence,
+                detected_intents,
                 selected_intent,
                 selected_node,
                 routing_time_ms,
             )
             print(
-                f"[ROUTER] question={question!r} normalized={normalized_question!r} "
-                f"matched_keywords={classification.matched_keywords} scores={classification.scores} "
-                f"confidence={final_confidence} selected_intent={selected_intent} "
-                f"selected_node={selected_node} routing_time_ms={routing_time_ms}"
+                f"[ROUTER] Original Query: {question!r}\n"
+                f"[ROUTER] Normalized Query: {normalized_question!r}\n"
+                f"[ROUTER] Detected Intents: {','.join(detected_intents)}\n"
+                f"[ROUTER] Selected Intent: {selected_label}\n"
+                f"[ROUTER] Selected Tool: {selected_node}\n"
+                f"[ROUTER] routing_time_ms={routing_time_ms}"
             )
 
         return RouterDecision(
@@ -86,42 +89,35 @@ class RouterService:
             selected_node=selected_node,
             routing_time_ms=routing_time_ms,
             debug_enabled=self.debug_enabled,
+            detected_intents=detected_intents,
+            multiple_intents=len(detected_intents) > 1,
         )
 
-    def _apply_negative_rules(self, classification: RouterClassification) -> str:
-        """Apply ordered override rules before final route selection."""
+    def _build_classification(self, normalized_question: str, detected_intents: list[str], selected_intent: str) -> RouterClassification:
+        """Create a compatibility classification payload for debug output."""
 
-        normalized_text = classification.normalized_query
-        tokens = set(classification.tokens)
-        scores = dict(classification.scores)
+        scores = {intent: 0 for intent in ("GREETING", "ACADEMIC", "POLICY", "UNKNOWN")}
+        scores[selected_intent] = 100
+        tokens = normalized_question.split()
+        return RouterClassification(
+            intent=selected_intent,
+            confidence=100,
+            scores=scores,
+            matched_keywords=tokens,
+            reason=f"Detected intents: {','.join(detected_intents)}.",
+            normalized_query=normalized_question,
+            tokens=tokens,
+        )
 
-        for rule in self.config.negative_rules:
-            matched_terms = self._matched_override_terms(rule.if_contains, normalized_text, tokens)
-            if matched_terms:
-                preferred = rule.prefer
-                scores[preferred] = max(scores.values(), default=0) + self.config.router_rules.group_bonus + self.config.router_rules.primary_keyword_weight
-                classification.scores = scores
-                for term in matched_terms:
-                    if term not in classification.matched_keywords:
-                        classification.matched_keywords.append(term)
-                return preferred
+    def _intent_to_node_key(self, label: str) -> str:
+        """Map a classifier label to the existing router intent key."""
 
-        selected_intent = classification.intent
-        classification.scores = scores
-        return selected_intent
-
-    def _matched_override_terms(self, phrases: list[str], normalized_text: str, tokens: set[str]) -> list[str]:
-        """Return the override terms that matched the query."""
-
-        matches: list[str] = []
-        for phrase in phrases:
-            phrase = phrase.lower().strip()
-            if " " in phrase:
-                if phrase in normalized_text:
-                    matches.append(phrase)
-            elif phrase in tokens:
-                matches.append(phrase)
-        return matches
+        mapping = {
+            "SQL": "ACADEMIC",
+            "RAG": "POLICY",
+            "GENERAL": "GREETING",
+        }
+        return mapping.get(label.upper(), "GREETING")
 
     def _intent_to_node(self, intent: str) -> str:
         """Map an intent to the corresponding backend node."""

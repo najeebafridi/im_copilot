@@ -32,12 +32,38 @@ class MockProvider(BaseProvider):
         """Build a short, useful development response from the incoming prompt."""
 
         normalized = system_prompt.lower()
+        if "intent classification engine" in normalized or "comma-separated list" in normalized:
+            return self._build_intent_classifier_response(user_message)
         if "structured data:" in normalized:
             return self._build_sql_debug_response(system_prompt)
         if "supplied context:" in normalized:
             return self._build_rag_debug_response(system_prompt)
 
         return self._build_generic_debug_response(system_prompt, user_message)
+
+    def _build_intent_classifier_response(self, user_message: str) -> str:
+        """Return a deterministic intent classification for mock mode."""
+
+        text = user_message.lower()
+        matches: list[tuple[int, str]] = []
+
+        for label, phrases in (
+            ("GENERAL", ("hello", "hi", "hey", "thank you", "thanks", "who are you", "help me", "help me use im copilot")),
+            ("SQL", ("gpa", "cgpa", "attendance", "credit hours", "grade", "grades", "timetable", "schedule", "transcript", "courses", "course")),
+            ("RAG", ("probation", "policy", "hostel", "scholarship", "transfer", "fee", "admission", "handbook", "library", "rules", "university", "registration", "wifi", "transport", "detained", "detention")),
+        ):
+            position = self._first_match_position(text, phrases)
+            if position is not None:
+                matches.append((position, label))
+
+        if not matches:
+            return "GENERAL"
+
+        ordered: list[str] = []
+        for _, label in sorted(matches, key=lambda item: item[0]):
+            if label not in ordered:
+                ordered.append(label)
+        return ",".join(ordered)
 
     def _build_rag_debug_response(self, system_prompt: str) -> str:
         """Summarize the retrieved context that would have been sent to an LLM."""
@@ -155,3 +181,11 @@ class MockProvider(BaseProvider):
         if len(normalized) <= limit:
             return normalized
         return normalized[:limit].rstrip() + "..."
+
+    def _first_match_position(self, text: str, phrases: tuple[str, ...]) -> int | None:
+        """Return the earliest phrase position in the text."""
+
+        positions = [text.find(phrase) for phrase in phrases if phrase in text]
+        if not positions:
+            return None
+        return min(positions)
