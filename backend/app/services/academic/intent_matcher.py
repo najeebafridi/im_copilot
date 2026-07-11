@@ -16,6 +16,7 @@ class AcademicIntent(StrEnum):
     ATTENDANCE_HIGHEST = "attendance_highest"
     ATTENDANCE_LOWEST = "attendance_lowest"
     ENROLLED_COURSES = "enrolled_courses"
+    CREDIT_HOURS = "credit_hours"
     GRADES = "grades"
     TIMETABLE = "timetable"
     UNSUPPORTED = "unsupported"
@@ -48,10 +49,12 @@ class AcademicIntentMatcher:
             return AcademicIntentMatch(intent=AcademicIntent.TIMETABLE)
         if self._contains_any(normalized, ("enrolled courses", "my courses", "registered courses")):
             return AcademicIntentMatch(intent=AcademicIntent.ENROLLED_COURSES)
+        if self._contains_any(normalized, ("credit hours", "credit hour", "completed credits", "credits completed")):
+            return AcademicIntentMatch(intent=AcademicIntent.CREDIT_HOURS)
         if self._contains_any(normalized, ("grades", "my grades")):
             return AcademicIntentMatch(intent=AcademicIntent.GRADES)
 
-        if self._contains_any(normalized, ("my name", "my semester", "my program", "my cgpa", "cgpa")):
+        if self._contains_any(normalized, ("my name", "my semester", "my program", "my cgpa", "cgpa", "my gpa", "gpa", "grade point average")):
             return AcademicIntentMatch(intent=AcademicIntent.PROFILE)
 
         attendance_course_reference = self._extract_course_reference(normalized)

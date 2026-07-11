@@ -87,6 +87,7 @@ def test_structure_detection_and_chunk_metadata() -> None:
     assert metadata["page_start"] == 1
     assert metadata["page_end"] == 1
     assert metadata["chapter"] == "CHAPTER 1"
+    assert metadata["heading_path"] == "CHAPTER 1 > 1.1"
 
 
 def test_ingestion_and_retrieval_pipeline(tmp_path: Path) -> None:
@@ -137,3 +138,4 @@ def test_ingestion_and_retrieval_pipeline(tmp_path: Path) -> None:
     assert results
     assert "metadata" in results[0]
     assert results[0]["metadata"]["source_file"] == "student_handbook.md"
+    assert results[0]["metadata"]["heading_path"] == "CHAPTER 1 > 1.1"

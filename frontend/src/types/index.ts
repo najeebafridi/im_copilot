@@ -22,6 +22,26 @@ export interface UserProfile {
   id: string;
   name: string;
   role: AuthRole;
+  program?: string | null;
+  semester?: number | null;
+  cgpa?: number | null;
+  attendancePercentage?: number | null;
+  creditHours?: number | null;
+  registeredCourses?: number | null;
+  timetable?: StudentTimetableEntry[];
+  attendanceRecords?: StudentAttendanceEntry[];
+}
+
+export interface StudentTimetableEntry {
+  course_name: string;
+  day: string;
+  time: string;
+  room: string;
+}
+
+export interface StudentAttendanceEntry {
+  course_name: string;
+  attendance_percentage: number;
 }
 
 export interface AuthContextValue {

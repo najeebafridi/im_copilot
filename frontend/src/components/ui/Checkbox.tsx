@@ -9,7 +9,7 @@ interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "typ
 export function Checkbox({ label, ...props }: CheckboxProps) {
   return (
     <label className="flex items-center gap-3 text-sm" style={{ color: THEME.colors.text }}>
-      <input type="checkbox" className="h-4 w-4" {...props} />
+      <input type="checkbox" className="h-4 w-4 accent-[var(--accent)]" {...props} />
       <span>{label}</span>
     </label>
   );

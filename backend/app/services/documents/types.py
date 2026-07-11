@@ -7,6 +7,13 @@ from pathlib import Path
 from typing import Any
 
 
+def build_heading_path(chapter: str, section: str, subsection: str) -> str:
+    """Build a compact hierarchical heading path."""
+
+    parts = [part.strip() for part in (chapter, section, subsection) if part.strip()]
+    return " > ".join(parts)
+
+
 @dataclass(slots=True)
 class ExtractedPage:
     """Single extracted page and its text."""
@@ -34,6 +41,7 @@ class StructuredSection:
     content: str
     page_start: int
     page_end: int
+    heading_path: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         """Convert the section record to a JSON-serializable dict."""
@@ -54,10 +62,15 @@ class ChunkRecord:
     section: str
     subsection: str
     text: str
+    section_index: int = 0
+    chunk_number: int = 1
+    contains_table: bool = False
+    heading_path: str = ""
 
     def to_metadata(self) -> dict[str, Any]:
         """Return Chroma-compatible metadata."""
 
+        heading_path = self.heading_path or build_heading_path(self.chapter, self.section, self.subsection)
         return {
             "chunk_id": self.chunk_id,
             "source_file": self.source_file,
@@ -67,6 +80,10 @@ class ChunkRecord:
             "chapter": self.chapter,
             "section": self.section,
             "subsection": self.subsection,
+            "section_index": self.section_index,
+            "chunk_number": self.chunk_number,
+            "heading_path": heading_path,
+            "contains_table": self.contains_table,
         }
 
     def to_dict(self) -> dict[str, Any]:
@@ -84,4 +101,3 @@ class LoadedDocument:
     path: Path
     document_type: str
     pages: list[ExtractedPage]
-

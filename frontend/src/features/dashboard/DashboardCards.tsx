@@ -59,6 +59,19 @@ export function ChartCard({ title, children }: { title: string; children: ReactN
   );
 }
 
+function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value?: number }>; label?: string }) {
+  if (!active || !payload || payload.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 shadow-lg">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">{label}</p>
+      <p className="mt-1 text-sm font-medium text-[var(--text)]">{payload[0]?.value}</p>
+    </div>
+  );
+}
+
 export function ScheduleCard({ items }: { items: DashboardScheduleItem[] }) {
   return (
     <Card className="p-5">
@@ -70,7 +83,8 @@ export function ScheduleCard({ items }: { items: DashboardScheduleItem[] }) {
               <div>
                 <p className="text-sm font-semibold text-[var(--text)]">{item.subject}</p>
                 <p className="text-sm text-[var(--muted)]">
-                  {item.room} · {item.instructor}
+                  {item.room}
+                  {item.instructor ? ` · ${item.instructor}` : ""}
                 </p>
               </div>
               <span className="rounded-full bg-[var(--surface)] px-3 py-1 text-xs font-medium text-[var(--text)]">
@@ -99,7 +113,7 @@ export function MiniLineChart({ data }: { data: Array<{ label: string; value: nu
       <LineChart data={data}>
         <XAxis dataKey="label" tickLine={false} axisLine={false} stroke="var(--muted)" fontSize={12} />
         <YAxis tickLine={false} axisLine={false} stroke="var(--muted)" fontSize={12} />
-        <Tooltip />
+        <Tooltip content={<ChartTooltip />} />
         <Line type="monotone" dataKey="value" stroke="var(--accent)" strokeWidth={3} dot={false} />
       </LineChart>
     </ResponsiveContainer>
@@ -112,7 +126,7 @@ export function MiniAreaChart({ data }: { data: Array<{ label: string; value: nu
       <AreaChart data={data}>
         <XAxis dataKey="label" tickLine={false} axisLine={false} stroke="var(--muted)" fontSize={12} />
         <YAxis tickLine={false} axisLine={false} stroke="var(--muted)" fontSize={12} />
-        <Tooltip />
+        <Tooltip content={<ChartTooltip />} />
         <Area type="monotone" dataKey="value" stroke="var(--accent)" fill="var(--surface-3)" />
       </AreaChart>
     </ResponsiveContainer>

@@ -10,7 +10,7 @@ interface EmptyStateProps {
 
 export function EmptyState({ title, description, action }: EmptyStateProps) {
   return (
-    <div className="rounded-2xl border p-6 text-center" style={{ borderColor: THEME.colors.border }}>
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center shadow-[0_8px_24px_rgba(16,36,59,0.06)]">
       <h3 className="text-lg font-semibold" style={{ color: THEME.colors.text }}>
         {title}
       </h3>

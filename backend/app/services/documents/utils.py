@@ -36,7 +36,23 @@ def normalize_text(text: str) -> str:
     text = text.replace("\r\n", "\n").replace("\r", "\n")
     text = text.replace("\x0c", "\n")
     lines = [re.sub(r"[ \t]+", " ", line).strip() for line in text.split("\n")]
-    normalized_lines = [line for line in lines if line]
+
+    normalized_lines: list[str] = []
+    previous_blank = False
+    for line in lines:
+        if not line:
+            if normalized_lines and not previous_blank:
+                normalized_lines.append("")
+            previous_blank = True
+            continue
+        normalized_lines.append(line)
+        previous_blank = False
+
+    while normalized_lines and normalized_lines[0] == "":
+        normalized_lines.pop(0)
+    while normalized_lines and normalized_lines[-1] == "":
+        normalized_lines.pop()
+
     return "\n".join(normalized_lines).strip()
 
 
@@ -44,4 +60,3 @@ def strip_heading_noise(line: str) -> str:
     """Remove extra punctuation and whitespace from a heading line."""
 
     return re.sub(r"\s+", " ", line).strip(" :.-")
-

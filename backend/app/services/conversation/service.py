@@ -137,8 +137,9 @@ class ConversationService:
         owner_type: str,
         conversation_id: str,
         message: str,
+        assistant_content: str | None = None,
     ) -> tuple[ConversationRecord, ConversationMessageRecord]:
-        """Append a user message and a placeholder assistant message."""
+        """Append a user message and an assistant reply."""
 
         with self._lock:
             self._remove_expired_locked()
@@ -165,7 +166,7 @@ class ConversationService:
                 message_id=str(uuid4()),
                 conversation_id=conversation_id,
                 role="assistant",
-                content=DEFAULT_ASSISTANT_REPLY,
+                content=assistant_content or DEFAULT_ASSISTANT_REPLY,
                 timestamp=now,
             )
             record.messages.extend([user_message, assistant_message])

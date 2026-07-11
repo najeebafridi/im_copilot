@@ -27,7 +27,7 @@ const ConversationContext = createContext<ConversationContextValue | undefined>(
 function buildDefaultAssistantContext(page: string): AssistantContext {
   return {
     page,
-    widget: "assistant-placeholder",
+    widget: "assistant",
     source: "frontend",
   };
 }

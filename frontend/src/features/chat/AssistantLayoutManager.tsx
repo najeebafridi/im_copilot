@@ -1,5 +1,7 @@
 import { type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
+import type { ConversationDetail } from "@/types";
+
 import { useAssistant } from "@/hooks/useAssistant";
 import {
   getAssistantPanelWidth,
@@ -15,7 +17,7 @@ const DEFAULT_PANEL_WIDTH = 440;
 
 interface AssistantLayoutManagerProps {
   workspace: "guest" | "dashboard";
-  onCreateConversation: () => Promise<void>;
+  onCreateConversation: () => Promise<ConversationDetail>;
   onCloseGuest: () => void;
   children: (layout: AssistantLayoutState) => ReactNode;
 }

@@ -17,15 +17,14 @@ export function AdminLayout({ children }: PropsWithChildren) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <header className="border-b border-white/10 bg-slate-950/90 backdrop-blur">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
+      <header className="border-b border-[var(--border)] bg-[var(--surface)]/90 backdrop-blur">
         <PageContainer>
           <div className="flex items-center justify-between gap-4">
-            <AppLogo compact tone="light" />
+            <AppLogo compact />
             {auth.isAuthenticated && auth.user ? (
               <ProfileMenu
                 user={auth.user}
-                tone="light"
                 onLogout={() => void handleLogout()}
                 onSettings={() => {}}
               />
@@ -34,7 +33,7 @@ export function AdminLayout({ children }: PropsWithChildren) {
         </PageContainer>
       </header>
 
-      <div className="mx-auto min-h-[calc(100vh-4rem)] w-full max-w-6xl px-5 py-6">
+      <div className="mx-auto min-h-[calc(100vh-4rem)] w-full max-w-7xl px-5 py-6">
         <main className="min-w-0">{children ?? <Outlet />}</main>
       </div>
     </div>

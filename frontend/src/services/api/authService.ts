@@ -12,6 +12,22 @@ interface BackendUserProfile {
   student_id: string;
   name: string;
   role: "student" | "admin";
+  program?: string | null;
+  semester?: number | null;
+  cgpa?: number | null;
+  attendance_percentage?: number | null;
+  credit_hours?: number | null;
+  registered_courses?: number | null;
+  timetable?: Array<{
+    course_name: string;
+    day: string;
+    time: string;
+    room: string;
+  }>;
+  attendance_records?: Array<{
+    course_name: string;
+    attendance_percentage: number;
+  }>;
 }
 
 function normalizeUserProfile(response: BackendUserProfile): UserProfile {
@@ -19,6 +35,14 @@ function normalizeUserProfile(response: BackendUserProfile): UserProfile {
     id: response.student_id,
     name: response.name,
     role: response.role,
+    program: response.program ?? null,
+    semester: response.semester ?? null,
+    cgpa: response.cgpa ?? null,
+    attendancePercentage: response.attendance_percentage ?? null,
+    creditHours: response.credit_hours ?? null,
+    registeredCourses: response.registered_courses ?? null,
+    timetable: response.timetable ?? [],
+    attendanceRecords: response.attendance_records ?? [],
   };
 }
 

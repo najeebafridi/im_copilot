@@ -19,7 +19,7 @@ export function AppLogo({ compact = false, tone = "dark" }: AppLogoProps) {
         </div>
         {!compact ? (
           <p className="text-sm" style={{ color: subtitleColor }}>
-            AI Academic Assistant
+            Intelligent Academic Assistant
           </p>
         ) : null}
       </div>

@@ -7,7 +7,17 @@ export function Student() {
 
   return (
     <>
-      <DashboardPage name={auth.user?.name ?? "Student"} semester="Semester 6" program="BSc Computer Science" />
+      <DashboardPage
+        name={auth.user?.name ?? "Student"}
+        semester={auth.user?.semester ?? "Semester 6"}
+        program={auth.user?.program ?? "BSc Computer Science"}
+        cgpa={auth.user?.cgpa ?? null}
+        attendancePercentage={auth.user?.attendancePercentage ?? null}
+        creditHours={auth.user?.creditHours ?? null}
+        registeredCourses={auth.user?.registeredCourses ?? null}
+        timetable={auth.user?.timetable ?? []}
+        attendanceRecords={auth.user?.attendanceRecords ?? []}
+      />
       <AssistantPlaceholder />
     </>
   );

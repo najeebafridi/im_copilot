@@ -18,8 +18,8 @@ export function NotFound() {
             <div className="space-y-2">
               <p className="text-6xl font-semibold tracking-tight">404</p>
               <h1 className="text-2xl font-semibold">Page Not Found</h1>
-              <p className="text-sm text-slate-600">
-                The page you are looking for does not exist in this phase of the project.
+              <p className="text-sm text-[var(--muted)]">
+                The page you are looking for does not exist.
               </p>
             </div>
             <Button variant="outline" type="button" onClick={() => navigate(APP_ROUTES.landing, { replace: true })}>

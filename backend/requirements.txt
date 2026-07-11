@@ -12,3 +12,5 @@ chromadb
 pdfplumber
 python-docx
 reportlab
+sentence-transformers
+rapidfuzz

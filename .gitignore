@@ -70,3 +70,5 @@ backend/processed/*.json
 
 
 cmmands.txt
+
+backend/copy.env

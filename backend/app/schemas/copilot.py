@@ -20,6 +20,7 @@ class CopilotSource(BaseModel):
     document: str
     chapter: str | None = None
     section: str | None = None
+    heading_path: str | None = None
     pages: str | None = None
 
 

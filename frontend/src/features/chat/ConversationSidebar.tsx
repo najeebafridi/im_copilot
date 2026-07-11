@@ -5,7 +5,7 @@ import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
-import { type ConversationSummary } from "@/types";
+import { type ConversationDetail, type ConversationSummary } from "@/types";
 import { cn } from "@/utils/cn";
 
 interface ConversationSidebarProps {
@@ -14,7 +14,7 @@ interface ConversationSidebarProps {
   loading: boolean;
   error: string | null;
   compact?: boolean;
-  onCreateConversation: () => Promise<void>;
+  onCreateConversation: () => Promise<ConversationDetail>;
   onSelectConversation: (conversationId: string) => Promise<void>;
   onDeleteConversation: (conversationId: string) => Promise<void>;
   onSettings: () => void;
@@ -60,8 +60,8 @@ export function ConversationSidebar({
 
   return (
     <>
-      <aside className="flex h-full min-h-0 flex-col bg-slate-50/80">
-        <div className={cn("border-b border-slate-200", compact ? "p-2" : "p-3")}>
+      <aside className="flex h-full min-h-0 flex-col bg-[var(--surface-2)]/80">
+        <div className={cn("border-b border-[var(--border)]", compact ? "p-2" : "p-3")}>
           <Button type="button" className="w-full justify-start gap-2 rounded-2xl" onClick={() => void handleCreateConversation()}>
             <Plus className="h-4 w-4" />
             New Conversation
@@ -90,7 +90,7 @@ export function ConversationSidebar({
                     key={conversation.conversation_id}
                     className={cn(
                       "group flex w-full items-center justify-between gap-2 rounded-xl px-2.5 py-2 text-left transition-colors",
-                      active ? "bg-slate-900 text-white" : "hover:bg-white",
+                      active ? "bg-[var(--accent)] text-white" : "hover:bg-[var(--surface)]",
                     )}
                     aria-current={active ? "page" : undefined}
                   >
@@ -104,15 +104,15 @@ export function ConversationSidebar({
                     <span
                       className={cn(
                         "h-2 w-2 shrink-0 rounded-full",
-                        active ? "bg-white" : "bg-slate-300 group-hover:bg-slate-400",
+                        active ? "bg-white" : "bg-[var(--muted)]/35 group-hover:bg-[var(--muted)]/55",
                       )}
                       aria-hidden="true"
                     />
                     <button
                       type="button"
                       className={cn(
-                        "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-slate-500 opacity-0 transition-opacity group-hover:opacity-100",
-                        active ? "border-white/20 bg-white/10 text-white" : "border-slate-200 bg-white",
+                        "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[var(--muted)] opacity-0 transition-opacity group-hover:opacity-100",
+                        active ? "border-white/20 bg-white/10 text-white" : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)]",
                       )}
                       onClick={() => setPendingDeleteId(conversation.conversation_id)}
                       aria-label={`Delete ${conversation.title}`}
@@ -126,10 +126,10 @@ export function ConversationSidebar({
           )}
         </div>
 
-        <div className="border-t border-slate-200 p-2">
+        <div className="border-t border-[var(--border)] p-2">
           <button
             type="button"
-            className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm text-slate-600 transition-colors hover:bg-white hover:text-slate-900"
+            className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm text-[var(--muted)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--text)]"
             onClick={onSettings}
           >
             <Settings2 className="h-4 w-4" />
@@ -139,11 +139,11 @@ export function ConversationSidebar({
       </aside>
 
       {pendingConversation ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Delete Conversation?</p>
-            <h4 className="mt-2 text-xl font-semibold text-slate-900">{pendingConversation.title}</h4>
-            <p className="mt-2 text-sm leading-6 text-slate-600">This action cannot be undone.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">Delete Conversation?</p>
+            <h4 className="mt-2 text-xl font-semibold text-[var(--text)]">{pendingConversation.title}</h4>
+            <p className="mt-2 text-sm leading-6 text-[var(--muted)]">This action cannot be undone.</p>
 
             <div className="mt-6 flex flex-wrap justify-end gap-3">
               <Button variant="outline" type="button" onClick={() => setPendingDeleteId(null)}>

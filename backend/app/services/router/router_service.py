@@ -7,8 +7,10 @@ import time
 from dataclasses import dataclass
 from functools import lru_cache
 
+from app.core.config import get_settings
 from app.services.router.config_loader import RouterConfig, get_router_config
 from app.services.router.intent_classifier import IntentClassifier, RouterClassification
+from app.services.router.query_normalizer import normalize_query
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +52,8 @@ class RouterService:
         """Return the selected intent and node for a user question."""
 
         start = time.perf_counter()
-        classification = self.classifier.classify(question)
+        normalized_question = normalize_query(question)
+        classification = self.classifier.classify(normalized_question)
         selected_intent = self._apply_negative_rules(classification)
         selected_node = self._intent_to_node(selected_intent)
         final_confidence = classification.scores.get(selected_intent, classification.confidence)
@@ -58,23 +61,24 @@ class RouterService:
         classification.confidence = final_confidence
         routing_time_ms = int((time.perf_counter() - start) * 1000)
 
-        logger.info(
-            "Router question=%s normalized=%s matched_keywords=%s scores=%s confidence=%s selected_intent=%s selected_node=%s routing_time_ms=%s",
-            question,
-            classification.normalized_query,
-            classification.matched_keywords,
-            classification.scores,
-            final_confidence,
-            selected_intent,
-            selected_node,
-            routing_time_ms,
-        )
-        print(
-            f"[ROUTER] question={question!r} normalized={classification.normalized_query!r} "
-            f"matched_keywords={classification.matched_keywords} scores={classification.scores} "
-            f"confidence={final_confidence} selected_intent={selected_intent} "
-            f"selected_node={selected_node} routing_time_ms={routing_time_ms}"
-        )
+        if get_settings().DEBUG:
+            logger.info(
+                "Router question=%s normalized=%s matched_keywords=%s scores=%s confidence=%s selected_intent=%s selected_node=%s routing_time_ms=%s",
+                question,
+                normalized_question,
+                classification.matched_keywords,
+                classification.scores,
+                final_confidence,
+                selected_intent,
+                selected_node,
+                routing_time_ms,
+            )
+            print(
+                f"[ROUTER] question={question!r} normalized={normalized_question!r} "
+                f"matched_keywords={classification.matched_keywords} scores={classification.scores} "
+                f"confidence={final_confidence} selected_intent={selected_intent} "
+                f"selected_node={selected_node} routing_time_ms={routing_time_ms}"
+            )
 
         return RouterDecision(
             classification=classification,

@@ -90,9 +90,9 @@ export function LoginPage({ mode }: LoginPageProps) {
         <div className="hidden space-y-6 lg:block">
           <AppLogo />
           <div className="space-y-3">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Secure access</p>
-            <h1 className="text-4xl font-semibold tracking-tight text-slate-900">{pageTitle}</h1>
-            <p className="max-w-xl text-base leading-7 text-slate-600">{pageDescription}</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">Secure access</p>
+            <h1 className="text-4xl font-semibold tracking-tight text-[var(--text)]">{pageTitle}</h1>
+            <p className="max-w-xl text-base leading-7 text-[var(--muted)]">{pageDescription}</p>
           </div>
         </div>
 
@@ -102,8 +102,8 @@ export function LoginPage({ mode }: LoginPageProps) {
               <div className="lg:hidden">
                 <AppLogo compact />
               </div>
-              <h2 className="text-2xl font-semibold tracking-tight text-slate-900">{pageTitle}</h2>
-              <p className="text-sm leading-6 text-slate-600">{pageDescription}</p>
+              <h2 className="text-2xl font-semibold tracking-tight text-[var(--text)]">{pageTitle}</h2>
+              <p className="text-sm leading-6 text-[var(--muted)]">{pageDescription}</p>
             </div>
 
             {errorMessage ? <Alert variant="error">{errorMessage}</Alert> : null}
@@ -158,7 +158,7 @@ export function LoginPage({ mode }: LoginPageProps) {
               >
                 Back to Home
               </Button>
-              <p className="text-xs text-slate-500">Need help? Use the credentials provided for your role.</p>
+              <p className="text-xs text-[var(--muted)]">Need help? Use the credentials provided for your role.</p>
             </div>
           </div>
         </PageCard>

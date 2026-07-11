@@ -57,6 +57,25 @@ class RouterGraphBuilder:
         )
         return self._attach_debug(response, decision)
 
+    def build_auth_required_response(self, decision: RouterDecision) -> CopilotChatResponse:
+        """Build a polite login-required response without calling the LLM."""
+
+        response = CopilotChatResponse(
+            answer=(
+                "I can help with personal academic details like CGPA, attendance, courses, and grades, "
+                "but you need to log in with a student account first."
+            ),
+            sources=[],
+            metadata=CopilotMetadata(
+                provider="router",
+                model="router",
+                cached=False,
+                latency_ms=decision.routing_time_ms,
+                retrieved_chunks=0,
+            ),
+        )
+        return self._attach_debug(response, decision)
+
     def _build_fallback_response(self, decision: RouterDecision) -> CopilotChatResponse:
         """Build the configured fallback response without calling the LLM."""
 

@@ -34,7 +34,13 @@
       "keywords": [
         "withdrawal",
         "freeze semester",
-        "course registration"
+        "course registration",
+        "transfer credit hours",
+        "credit transfer",
+        "minimum cgpa",
+        "minimum gpa",
+        "cgpa requirement",
+        "gpa requirement"
       ]
     },
     {
@@ -56,7 +62,15 @@
         "procedure",
         "eligibility",
         "document",
-        "handbook"
+        "handbook",
+        "wifi",
+        "wi-fi",
+        "wireless",
+        "internet access",
+        "network access",
+        "ssid",
+        "hostel",
+        "hostel rules"
       ]
     }
   ]

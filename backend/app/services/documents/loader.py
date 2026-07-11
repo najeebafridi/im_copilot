@@ -6,6 +6,8 @@ from pathlib import Path
 
 import pdfplumber
 from docx import Document
+from docx.table import Table
+from docx.text.paragraph import Paragraph
 
 from app.services.documents.cleaning import clean_page_text
 from app.services.documents.types import ExtractedPage, LoadedDocument
@@ -37,18 +39,20 @@ class DocumentLoader:
         pages: list[ExtractedPage] = []
         with pdfplumber.open(path) as pdf:
             for index, page in enumerate(pdf.pages, start=1):
+                fragments: list[str] = []
                 text = page.extract_text(layout=True) or ""
-                tables = page.extract_tables() or []
-                table_text: list[str] = []
-                for table in tables:
-                    rows = []
-                    for row in table:
-                        cells = [cell.strip() if cell else "" for cell in row]
-                        rows.append(" | ".join(cells))
-                    if rows:
-                        table_text.append("\n".join(rows))
+                if text.strip():
+                    fragments.append(text.strip())
 
-                combined = "\n".join(part for part in [text, *table_text] if part).strip()
+                tables = page.find_tables() or []
+                for table in sorted(tables, key=lambda item: item.bbox[1]):
+                    rendered = self._render_table(table.extract())
+                    if rendered:
+                        fragments.append("[TABLE BEGIN]")
+                        fragments.append(rendered)
+                        fragments.append("[TABLE END]")
+
+                combined = "\n\n".join(fragments).strip()
                 pages.append(
                     ExtractedPage(
                         page=index,
@@ -63,17 +67,19 @@ class DocumentLoader:
 
         document = Document(path)
         parts: list[str] = []
-        for paragraph in document.paragraphs:
-            if paragraph.text.strip():
-                parts.append(paragraph.text)
+        for block in self._iter_block_items(document):
+            if isinstance(block, Paragraph):
+                text = block.text.strip()
+                if text:
+                    parts.append(text)
+            elif isinstance(block, Table):
+                rendered = self._render_table([[cell.text for cell in row.cells] for row in block.rows])
+                if rendered:
+                    parts.append("[TABLE BEGIN]")
+                    parts.append(rendered)
+                    parts.append("[TABLE END]")
 
-        for table in document.tables:
-            for row in table.rows:
-                cells = [cell.text.strip() for cell in row.cells if cell.text.strip()]
-                if cells:
-                    parts.append(" | ".join(cells))
-
-        text = clean_page_text("\n".join(parts))
+        text = clean_page_text("\n\n".join(parts))
         return [ExtractedPage(page=1, text=text, source_file=path.name)]
 
     def _load_text(self, path: Path) -> list[ExtractedPage]:
@@ -82,3 +88,24 @@ class DocumentLoader:
         text = clean_page_text(path.read_text(encoding="utf-8", errors="ignore"))
         return [ExtractedPage(page=1, text=text, source_file=path.name)]
 
+    def _render_table(self, table: list[list[str | None]] | None) -> str:
+        """Render a table into a lightweight markdown-like block."""
+
+        if not table:
+            return ""
+
+        rows: list[str] = []
+        for row in table:
+            cells = [cell.strip() if cell else "" for cell in row]
+            if any(cells):
+                rows.append(" | ".join(cells))
+        return "\n".join(rows).strip()
+
+    def _iter_block_items(self, document: Document):
+        """Yield paragraphs and tables in document order."""
+
+        for child in document.element.body.iterchildren():
+            if child.tag.endswith("}p"):
+                yield Paragraph(child, document)
+            elif child.tag.endswith("}tbl"):
+                yield Table(child, document)

@@ -58,6 +58,7 @@ def test_context_builder_formats_sources() -> None:
                     "chapter": "CHAPTER 1",
                     "section": "Attendance",
                     "subsection": "Policy",
+                    "heading_path": "CHAPTER 1 > Attendance > Policy",
                     "page_start": 2,
                     "page_end": 3,
                 },
@@ -67,12 +68,14 @@ def test_context_builder_formats_sources() -> None:
 
     assert "Document: handbook.md" in context
     assert "Chapter: CHAPTER 1" in context
+    assert "Heading Path: CHAPTER 1 > Attendance > Policy" in context
     assert "Pages: 2-3" in context
     assert sources == [
         {
             "document": "handbook.md",
             "chapter": "CHAPTER 1",
             "section": "Attendance",
+            "heading_path": "CHAPTER 1 > Attendance > Policy",
             "pages": "2-3",
         }
     ]
@@ -109,6 +112,7 @@ def test_copilot_chat_service_returns_structured_response() -> None:
                     "chapter": "CHAPTER 1",
                     "section": "Attendance",
                     "subsection": "Policy",
+                    "heading_path": "CHAPTER 1 > Attendance > Policy",
                     "page_start": 2,
                     "page_end": 2,
                 },
@@ -136,6 +140,7 @@ def test_copilot_chat_service_returns_structured_response() -> None:
 
     assert response.answer == "Students must attend 75% of classes."
     assert response.sources[0].document == "handbook.md"
+    assert response.sources[0].heading_path == "CHAPTER 1 > Attendance > Policy"
     assert response.metadata.cached is False
     assert response.metadata.retrieved_chunks == 1
 

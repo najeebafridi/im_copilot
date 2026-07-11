@@ -67,23 +67,37 @@ class AcademicQueryService:
     def answer(self, message: str, current_user: User, conversation_id: str | None = None) -> CopilotChatResponse:
         """Return a grounded explanation for an authenticated student."""
 
+        total_start = time.perf_counter()
+
         if current_user.role != "student":
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Student access is required")
+            total_latency_ms = int((time.perf_counter() - total_start) * 1000)
+            logger.info(
+                "Academic student-only question handled role=%s latency_ms=%s",
+                current_user.role,
+                total_latency_ms,
+            )
+            print(f"[ACADEMIC] student-only question handled role={current_user.role} latency_ms={total_latency_ms}")
+            return self._student_only_response(total_latency_ms)
 
         logger.info("Academic question received student_id=%s", current_user.student_id)
         print(f"[ACADEMIC] question received student_id={current_user.student_id}")
 
-        total_start = time.perf_counter()
         query = self.preprocessor.preprocess(message)
         match = self.intent_matcher.match(query)
         logger.info("Academic intent detected student_id=%s intent=%s", current_user.student_id, match.intent)
         print(f"[ACADEMIC] intent={match.intent} student_id={current_user.student_id}")
 
         if match.intent == AcademicIntent.UNSUPPORTED:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Unsupported academic question.",
+            total_latency_ms = int((time.perf_counter() - total_start) * 1000)
+            logger.info(
+                "Academic unsupported question handled student_id=%s latency_ms=%s",
+                current_user.student_id,
+                total_latency_ms,
             )
+            print(
+                f"[ACADEMIC] unsupported question handled student_id={current_user.student_id} latency_ms={total_latency_ms}"
+            )
+            return self._unsupported_response(total_latency_ms)
 
         db_start = time.perf_counter()
         try:
@@ -157,6 +171,7 @@ class AcademicQueryService:
             AcademicIntent.ATTENDANCE_HIGHEST: self._handle_highest_attendance,
             AcademicIntent.ATTENDANCE_LOWEST: self._handle_lowest_attendance,
             AcademicIntent.ENROLLED_COURSES: self._handle_enrolled_courses,
+            AcademicIntent.CREDIT_HOURS: self._handle_credit_hours,
             AcademicIntent.GRADES: self._handle_grades,
             AcademicIntent.TIMETABLE: self._handle_timetable,
         }
@@ -289,6 +304,37 @@ class AcademicQueryService:
         return self._result(
             intent=AcademicIntent.ENROLLED_COURSES,
             handler_name="enrolled_courses",
+            data=data,
+            sources=[self._database_source("enrollments"), self._database_source("courses")],
+        )
+
+    def _handle_credit_hours(self, current_user: User, _: str | None) -> AcademicQueryResult:
+        """Return the student's completed credit hours."""
+
+        rows = self.db.execute(
+            select(Course.course_code, Course.course_name, Course.credit_hours)
+            .join(Enrollment, Enrollment.course_id == Course.id)
+            .where(Enrollment.student_id == current_user.student_id)
+            .order_by(Course.course_code)
+        ).all()
+        if not rows:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No enrolled courses found.")
+
+        data = {
+            "student_id": current_user.student_id,
+            "total_credit_hours": sum(row.credit_hours for row in rows),
+            "courses": [
+                {
+                    "course_code": row.course_code,
+                    "course_name": row.course_name,
+                    "credit_hours": row.credit_hours,
+                }
+                for row in rows
+            ],
+        }
+        return self._result(
+            intent=AcademicIntent.CREDIT_HOURS,
+            handler_name="credit_hours",
             data=data,
             sources=[self._database_source("enrollments"), self._database_source("courses")],
         )
@@ -444,6 +490,42 @@ class AcademicQueryService:
             if isinstance(value, list):
                 return len(value)
         return 1
+
+    def _unsupported_response(self, latency_ms: int) -> CopilotChatResponse:
+        """Return a friendly fallback when the academic matcher cannot classify a question."""
+
+        return CopilotChatResponse(
+            answer=(
+                "I can help with GPA, attendance, enrolled courses, grades, and timetable. "
+                "If this is a university question, it may be supported in a future upgrade."
+            ),
+            sources=[],
+            metadata=CopilotMetadata(
+                provider="academic",
+                model="rule-based",
+                cached=False,
+                latency_ms=latency_ms,
+                retrieved_chunks=0,
+            ),
+        )
+
+    def _student_only_response(self, latency_ms: int) -> CopilotChatResponse:
+        """Return a polite response when a non-student account asks for personal academic data."""
+
+        return CopilotChatResponse(
+            answer=(
+                "I can only show personal academic details for a student account. "
+                "Please log in with your student ID to check GPA, attendance, and related records."
+            ),
+            sources=[],
+            metadata=CopilotMetadata(
+                provider="academic",
+                model="rule-based",
+                cached=False,
+                latency_ms=latency_ms,
+                retrieved_chunks=0,
+            ),
+        )
 
 
 def get_academic_query_service(

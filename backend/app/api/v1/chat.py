@@ -24,6 +24,8 @@ from app.schemas.conversation import (
     ConversationStatusResponse,
     ConversationSummaryResponse,
 )
+from app.services.academic.service import AcademicQueryService, get_academic_query_service
+from app.services.copilot.service import CopilotChatService, get_copilot_chat_service
 from app.services.conversation.models import ConversationRecord
 from app.services.conversation.service import (
     ConversationLimitError,
@@ -31,6 +33,9 @@ from app.services.conversation.service import (
     ConversationOwnershipError,
     get_conversation_service,
 )
+from app.services.llm.exceptions import LLMConfigurationError, LLMProviderError
+from app.services.router.graph_builder import RouterGraphBuilder
+from app.services.router.router_service import RouterService, get_router_service
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 oauth2_optional = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
@@ -89,16 +94,52 @@ def send_message(
     request: Request,
     token: str | None = Depends(oauth2_optional),
     db: Session = Depends(get_db),
+    router_service: RouterService = Depends(get_router_service),
+    academic_service: AcademicQueryService = Depends(get_academic_query_service),
+    copilot_service: CopilotChatService = Depends(get_copilot_chat_service),
 ) -> ConversationSendResponse:
-    """Append the user message and a placeholder assistant reply."""
+    """Append the user message and the routed assistant reply."""
 
     owner = _resolve_owner(request, token, db)
     try:
+        decision = router_service.route(payload.message)
+        graph = RouterGraphBuilder()
+        try:
+            current_user = _resolve_current_user_if_needed(
+                request=request,
+                token=token,
+                db=db,
+                selected_intent=decision.selected_intent,
+            )
+        except HTTPException as exc:
+            if decision.selected_intent == "ACADEMIC" and exc.status_code == status.HTTP_401_UNAUTHORIZED:
+                routed_response = graph.build_auth_required_response(decision)
+                conversation, assistant_message = get_conversation_service().send_message(
+                    owner_id=owner.owner_id,
+                    owner_type=owner.owner_type,
+                    conversation_id=conversation_id,
+                    message=payload.message,
+                    assistant_content=routed_response.answer,
+                )
+                return ConversationSendResponse(
+                    conversation=_to_detail_response(conversation),
+                    assistant_message=_to_message_response(assistant_message),
+                )
+            raise
+        routed_response = graph.build_response(
+            decision=decision,
+            message=payload.message,
+            conversation_id=conversation_id,
+            academic_service=academic_service,
+            policy_service=copilot_service,
+            current_user=current_user,
+        )
         conversation, assistant_message = get_conversation_service().send_message(
             owner_id=owner.owner_id,
             owner_type=owner.owner_type,
             conversation_id=conversation_id,
             message=payload.message,
+            assistant_content=routed_response.answer,
         )
     except ConversationNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found") from exc
@@ -106,6 +147,10 @@ def send_message(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Conversation access denied") from exc
     except ConversationLimitError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except LLMConfigurationError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    except LLMProviderError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 
     return ConversationSendResponse(
         conversation=_to_detail_response(conversation),
@@ -201,6 +246,53 @@ def _resolve_owner(request: Request | None, token: str | None, db: Session) -> O
         raise credentials_exception
 
     return OwnerContext(owner_id=user.student_id, owner_type=user.role)
+
+
+def _resolve_current_user_if_needed(
+    request: Request,
+    token: str | None,
+    db: Session,
+    selected_intent: str,
+) -> User | None:
+    """Resolve the authenticated user only when academic routing is selected."""
+
+    if selected_intent != "ACADEMIC":
+        return None
+
+    if not token:
+        authorization = request.headers.get("Authorization", "")
+        scheme, _, header_token = authorization.partition(" ")
+        if scheme.lower() == "bearer" and header_token:
+            token = header_token
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication is required.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    settings = get_settings()
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    try:
+        payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+        student_id: str | None = payload.get("sub")
+        role: str | None = payload.get("role")
+        if student_id is None or role is None:
+            raise credentials_exception
+    except JWTError as exc:
+        raise credentials_exception from exc
+
+    user = db.query(User).filter(User.student_id == student_id).first()
+    if user is None:
+        raise credentials_exception
+
+    return user
 
 
 def _to_summary_response(record: ConversationRecord) -> ConversationSummaryResponse:

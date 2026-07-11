@@ -6,7 +6,7 @@ export function Admin() {
     <>
       <PagePlaceholder
         title="Admin"
-        description="This placeholder admin page will later host upload, management, and monitoring tools."
+        description="Administrator access is handled through the protected application shell."
       />
       <AssistantPlaceholder />
     </>

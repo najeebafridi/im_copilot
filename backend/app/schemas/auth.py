@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class LoginRequest(BaseModel):
@@ -26,4 +26,44 @@ class UserProfileResponse(BaseModel):
     name: str
     email: str
     role: str
+    program: str | None = None
+    semester: int | None = None
+    cgpa: float | None = None
+    attendance_percentage: float | None = None
+    credit_hours: int | None = None
+    registered_courses: int | None = None
+    timetable: list[TimetableEntryResponse] = Field(default_factory=list)
+    attendance_records: list[AttendanceEntryResponse] = Field(default_factory=list)
 
+
+class TimetableEntryResponse(BaseModel):
+    """Timetable entry returned as part of the logged-in student profile."""
+
+    course_name: str
+    day: str
+    time: str
+    room: str
+
+
+class AttendanceEntryResponse(BaseModel):
+    """Attendance entry returned as part of the logged-in student profile."""
+
+    course_name: str
+    attendance_percentage: float
+
+
+class StudentDashboardResponse(BaseModel):
+    """Extended profile payload used by the dashboard."""
+
+    student_id: str
+    name: str
+    email: str
+    role: str
+    program: str | None = None
+    semester: int | None = None
+    cgpa: float | None = None
+    attendance_percentage: float | None = None
+    credit_hours: int | None = None
+    registered_courses: int | None = None
+    timetable: list[TimetableEntryResponse] = Field(default_factory=list)
+    attendance_records: list[AttendanceEntryResponse] = Field(default_factory=list)

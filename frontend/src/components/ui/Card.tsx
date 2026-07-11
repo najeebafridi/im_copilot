@@ -9,7 +9,10 @@ interface CardProps extends PropsWithChildren {
 export function Card({ children, className }: CardProps) {
   return (
     <div
-      className={cn("rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[0_8px_24px_rgba(16,36,59,0.08)]", className)}
+      className={cn(
+        "rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[0_8px_24px_rgba(16,36,59,0.08)] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-lg",
+        className,
+      )}
     >
       {children}
     </div>

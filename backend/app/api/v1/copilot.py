@@ -33,13 +33,18 @@ def chat(
 
     try:
         decision = router_service.route(payload.message)
-        current_user = _resolve_current_user_if_needed(
-            request=request,
-            token=token,
-            db=academic_service.db,
-            selected_intent=decision.selected_intent,
-        )
         graph = RouterGraphBuilder()
+        try:
+            current_user = _resolve_current_user_if_needed(
+                request=request,
+                token=token,
+                db=academic_service.db,
+                selected_intent=decision.selected_intent,
+            )
+        except HTTPException as exc:
+            if decision.selected_intent == "ACADEMIC" and exc.status_code == status.HTTP_401_UNAUTHORIZED:
+                return graph.build_auth_required_response(decision)
+            raise
         return graph.build_response(
             decision=decision,
             message=payload.message,

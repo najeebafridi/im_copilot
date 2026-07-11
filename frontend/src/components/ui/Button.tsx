@@ -44,7 +44,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         ref={ref}
-        className={cn(buttonVariants({ variant, size }), className)}
+        className={cn(
+          buttonVariants({ variant, size }),
+          "transition-all duration-200 ease-out hover:-translate-y-[1px] hover:shadow-md focus-visible:ring-[var(--accent)]",
+          className,
+        )}
         style={variantStyle}
         disabled={isDisabled}
         {...props}

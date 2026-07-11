@@ -29,22 +29,22 @@ export function AssistantInput() {
 
   return (
     <form
-      className="shrink-0 space-y-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4"
+      className="shrink-0 space-y-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3"
       onSubmit={(event) => {
         event.preventDefault();
         void handleSend();
       }}
     >
-      <div className="space-y-2">
-        <div className="flex items-start justify-between gap-3">
-          <label className="text-sm font-medium text-[var(--text)]" htmlFor="assistant-message">
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between gap-3">
+          <label className="text-xs font-medium text-[var(--text)]" htmlFor="assistant-message">
             How can I help today?
           </label>
           <span className="text-xs text-[var(--muted)]">{draftMessage.length} / 500</span>
         </div>
         <textarea
           id="assistant-message"
-          className="min-h-[112px] w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-sm text-[var(--text)] outline-none"
+          className="min-h-[72px] w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 text-sm leading-6 text-[var(--text)] outline-none"
           placeholder="Ask about attendance, timetable, policies, or your courses."
           value={draftMessage}
           onChange={(event) => setDraftMessage(event.target.value)}
@@ -64,9 +64,9 @@ export function AssistantInput() {
         </Alert>
       ) : null}
 
-      <div className="flex items-center justify-end gap-3">
+      <div className="flex items-center justify-end gap-2">
         {isSending ? <Spinner label="Sending..." /> : null}
-        <Button type="submit" loading={isSending} disabled={!trimmed || isSending}>
+        <Button type="submit" loading={isSending} disabled={!trimmed || isSending} className="h-10 px-4">
           <Send className="mr-2 h-4 w-4" />
           Send
         </Button>

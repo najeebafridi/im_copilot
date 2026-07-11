@@ -1,3 +1,5 @@
+import type { ReactElement } from "react";
+
 import ReactMarkdown from "react-markdown";
 
 interface MarkdownContentProps {
@@ -15,7 +17,7 @@ function isTableBlock(block: string): boolean {
   return header.includes("|") && /^:?-{3,}:?(?:\s*\|\s*:?-{3,}:?)+$/.test(divider.replace(/\s+/g, ""));
 }
 
-function renderTable(block: string): JSX.Element {
+function renderTable(block: string): ReactElement {
   const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
   const rows = lines.map((line) =>
     line

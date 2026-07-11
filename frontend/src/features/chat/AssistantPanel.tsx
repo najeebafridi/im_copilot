@@ -17,7 +17,7 @@ interface AssistantPanelProps {
   loading: boolean;
   isSending: boolean;
   error: string | null;
-  onCreateConversation: () => Promise<void>;
+  onCreateConversation: () => Promise<ConversationDetail>;
   onSelectConversation: (conversationId: string) => Promise<void>;
   onDeleteConversation: (conversationId: string) => Promise<void>;
   onSettings: () => void;
@@ -51,9 +51,9 @@ export function AssistantPanel({
   const isFullscreen = mode === "FULLSCREEN";
   const showSidebar = isGuest ? true : layout.sidebarOpen;
   const panelClassName = cn(
-    "fixed z-30 overflow-hidden border border-slate-200 bg-white text-slate-900 shadow-2xl transition-all duration-200",
+    "fixed z-30 overflow-hidden border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] shadow-2xl transition-all duration-200",
     isDocked ? "right-0 top-0 bottom-0 rounded-l-3xl border-r-0" : "",
-    isFullscreen ? "inset-0 rounded-none border-0 shadow-none" : "",
+    isFullscreen ? "inset-0 h-[100dvh] rounded-none border-0 shadow-none" : "",
   );
 
   const panelStyle = isDocked
@@ -67,7 +67,7 @@ export function AssistantPanel({
     <section className={panelClassName} style={panelStyle} aria-label="IM Copilot assistant workspace">
       {isDocked ? (
         <div
-          className="absolute left-0 top-0 z-20 h-full w-2 cursor-col-resize bg-transparent transition-colors hover:bg-slate-200"
+          className="absolute left-0 top-0 z-20 h-full w-2 cursor-col-resize bg-transparent transition-colors hover:bg-[var(--border)]"
           onPointerDown={layout.startResize}
           role="presentation"
           aria-hidden="true"
@@ -75,10 +75,10 @@ export function AssistantPanel({
       ) : null}
 
       <div className="flex h-full min-h-0 flex-col">
-        <div className={cn("flex items-center justify-between border-b border-slate-200", modePadding(mode))}>
+        <div className={cn("flex items-center justify-between border-b border-[var(--border)]", modePadding(mode))}>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className={cn("truncate font-semibold text-slate-900", isDocked ? "text-sm" : "text-lg")}>
+              <h2 className={cn("truncate font-semibold text-[var(--text)]", isDocked ? "text-sm" : "text-lg")}>
                 {currentConversation?.title ?? "IM Copilot"}
               </h2>
             </div>
@@ -88,7 +88,7 @@ export function AssistantPanel({
             {isGuest ? (
               <button
                 type="button"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-100"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface-2)] text-[var(--text)] transition-colors hover:bg-[var(--surface-3)]"
                 onClick={() => setGuestSettingsOpen((current) => !current)}
                 aria-label="Open settings"
                 title="Settings"
@@ -100,7 +100,7 @@ export function AssistantPanel({
             {!isGuest ? (
               <button
                 type="button"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-100"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface-2)] text-[var(--text)] transition-colors hover:bg-[var(--surface-3)]"
                 onClick={layout.toggleSidebar}
                 aria-label={layout.sidebarOpen ? "Hide sidebar" : "Show sidebar"}
                 title={layout.sidebarOpen ? "Hide sidebar" : "Show sidebar"}
@@ -112,7 +112,7 @@ export function AssistantPanel({
             {!isGuest ? (
               <button
                 type="button"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-100"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface-2)] text-[var(--text)] transition-colors hover:bg-[var(--surface-3)]"
                 onClick={isFullscreen ? layout.collapseAssistant : layout.fullscreenAssistant}
                 aria-label={isFullscreen ? "Return to docked" : "Enter fullscreen"}
                 title={isFullscreen ? "Return to docked" : "Enter fullscreen"}
@@ -123,7 +123,7 @@ export function AssistantPanel({
 
             <button
               type="button"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-100"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface-2)] text-[var(--text)] transition-colors hover:bg-[var(--surface-3)]"
               onClick={onClose}
               aria-label={isGuest ? "Back" : "Close assistant"}
               title={isGuest ? "Back" : "Close assistant"}
@@ -135,10 +135,10 @@ export function AssistantPanel({
         </div>
 
         {isGuest && guestSettingsOpen ? (
-          <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
+          <div className="border-b border-[var(--border)] bg-[var(--surface-2)] px-4 py-3">
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)]"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             >
               {theme === "dark" ? <SunMedium className="h-4 w-4" /> : <MoonStar className="h-4 w-4" />}
@@ -149,7 +149,7 @@ export function AssistantPanel({
 
         <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
           {showSidebar ? (
-            <div className={cn("min-h-0 border-r border-slate-200", isDocked ? "w-[220px]" : "w-[260px]")}>
+            <div className={cn("min-h-0 border-r border-[var(--border)]", isDocked ? "w-[220px]" : "w-[260px]")}>
               <ConversationSidebar
                 conversations={conversations}
                 currentConversationId={currentConversationId}
@@ -164,7 +164,7 @@ export function AssistantPanel({
             </div>
           ) : null}
 
-          <div className="min-h-0 flex-1 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]">
+          <div className="min-h-0 flex-1 overflow-hidden bg-[linear-gradient(180deg,var(--surface)_0%,var(--surface-2)_100%)]">
             <ConversationWorkspace
               conversation={currentConversation}
               loading={loading}

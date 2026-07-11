@@ -13,11 +13,11 @@ interface ConversationWorkspaceProps {
 
 export function ConversationWorkspace({ conversation, loading, isSending, compact = false }: ConversationWorkspaceProps) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3 p-4 pb-10">
-      <Card className="flex min-h-0 flex-1 flex-col overflow-hidden border-slate-200">
-        <div className="border-b border-slate-200 px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Conversation Workspace</p>
-          <h3 className="mt-1 text-base font-semibold text-slate-900">
+    <div className="flex h-full min-h-0 flex-1 flex-col gap-3 overflow-hidden p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+      <Card className="flex min-h-0 flex-1 flex-col overflow-hidden border-[var(--border)]">
+        <div className="border-b border-[var(--border)] px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">Conversation Workspace</p>
+          <h3 className="mt-1 text-base font-semibold text-[var(--text)]">
             {conversation ? conversation.title : "Welcome to IM Copilot"}
           </h3>
         </div>
@@ -27,7 +27,7 @@ export function ConversationWorkspace({ conversation, loading, isSending, compac
         </div>
       </Card>
 
-      <div className="pb-8">
+      <div className="shrink-0">
         <AssistantInput />
       </div>
     </div>

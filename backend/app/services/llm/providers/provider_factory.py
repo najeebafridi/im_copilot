@@ -16,6 +16,7 @@ class ProviderFactory:
         "openai": "https://api.openai.com/v1",
         "openrouter": "https://openrouter.ai/api/v1",
         "grok": "https://api.x.ai/v1",
+        "groq": "https://api.groq.com/openai/v1",
     }
 
     @classmethod
@@ -30,7 +31,7 @@ class ProviderFactory:
         if not provider_name:
             provider_name = cls._infer_provider(settings.LLM_BASE_URL)
 
-        if provider_name not in {"openai", "openrouter", "grok"}:
+        if provider_name not in {"openai", "openrouter", "grok", "groq"}:
             raise LLMConfigurationError(f"Invalid LLM provider: {provider_name}")
 
         base_url = settings.LLM_BASE_URL.strip() or cls.DEFAULT_BASE_URLS[provider_name]
@@ -63,6 +64,8 @@ class ProviderFactory:
             return "openrouter"
         if "x.ai" in normalized or "xai" in normalized or "grok" in normalized:
             return "grok"
+        if "groq" in normalized:
+            return "groq"
         if "openai" in normalized:
             return "openai"
         return "openai"

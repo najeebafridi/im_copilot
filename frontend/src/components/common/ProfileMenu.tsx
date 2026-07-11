@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { CircleUserRound, LogOut, MoonStar, Settings2, SunMedium, UserRound } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
+import { Dialog } from "@/components/ui/Dialog";
 import { useThemeContext } from "@/providers/ThemeProvider";
 import { cn } from "@/utils/cn";
 import { type UserProfile } from "@/types";
@@ -41,10 +42,10 @@ export function ProfileMenu({ user, onLogout, onSettings, className, tone = "dar
     };
   }, []);
 
-  const menuBg = tone === "light" ? "bg-slate-900 text-white" : "bg-white text-slate-900";
-  const panelBorder = tone === "light" ? "border-white/10" : "border-slate-200";
-  const hoverItemClass = tone === "light" ? "hover:bg-white/10" : "hover:bg-slate-100";
-  const secondaryTextClass = tone === "light" ? "text-white/70" : "text-slate-500";
+  const menuBg = tone === "light" ? "bg-[var(--surface)] text-[var(--text)]" : "bg-[var(--surface)] text-[var(--text)]";
+  const panelBorder = "border-[var(--border)]";
+  const hoverItemClass = "hover:bg-[var(--surface-2)]";
+  const secondaryTextClass = "text-[var(--muted)]";
 
   return (
     <div ref={rootRef} className={cn("relative", className)}>
@@ -60,8 +61,8 @@ export function ProfileMenu({ user, onLogout, onSettings, className, tone = "dar
 
       {open ? (
         <div className={cn("absolute right-0 top-14 z-50 w-72 overflow-hidden rounded-2xl border shadow-xl", menuBg, panelBorder)}>
-          <div className={cn("flex items-center gap-3 border-b px-4 py-4", tone === "light" ? "border-white/10" : "border-slate-200")}>
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-700">
+          <div className={cn("flex items-center gap-3 border-b px-4 py-4", "border-[var(--border)]")}>
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-2)] text-[var(--text)]">
               <UserRound className="h-5 w-5" />
             </div>
             <div className="min-w-0">
@@ -115,29 +116,34 @@ export function ProfileMenu({ user, onLogout, onSettings, className, tone = "dar
         </div>
       ) : null}
 
-      {aboutOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4">
-          <div className={cn("w-full max-w-md rounded-2xl border p-6 shadow-2xl", menuBg, panelBorder)}>
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface-2)]">
-                <CircleUserRound className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-lg font-semibold">About IM Copilot</p>
-                <p className={cn("text-sm", secondaryTextClass)}>Academic assistant for a university environment.</p>
-              </div>
-            </div>
-            <p className={cn("mt-4 text-sm leading-6", secondaryTextClass)}>
-              IM Copilot combines dashboard information, student support, and a conversational assistant for academic tasks.
-            </p>
-            <div className="mt-6 flex justify-end">
-              <Button type="button" variant="outline" onClick={() => setAboutOpen(false)}>
-                Close
-              </Button>
-            </div>
+      <Dialog open={aboutOpen} title="IM Copilot" onClose={() => setAboutOpen(false)}>
+        <div className="grid gap-3 text-sm text-[var(--muted)]">
+          <div className="flex items-center justify-between gap-4 rounded-xl bg-[var(--surface-2)] px-4 py-3">
+            <span>Project</span>
+            <span className="font-medium text-[var(--text)]">IM Copilot</span>
+          </div>
+          <div className="flex items-center justify-between gap-4 rounded-xl bg-[var(--surface-2)] px-4 py-3">
+            <span>Version</span>
+            <span className="font-medium text-[var(--text)]">1.0.0</span>
+          </div>
+          <div className="flex items-center justify-between gap-4 rounded-xl bg-[var(--surface-2)] px-4 py-3">
+            <span>Developers</span>
+            <span className="font-medium text-[var(--text)]">Najeeb Ullah, Madiha Shahab, Muneeze Malik</span>
+          </div>
+          <div className="flex items-center justify-between gap-4 rounded-xl bg-[var(--surface-2)] px-4 py-3">
+            <span>Department</span>
+            <span className="font-medium text-[var(--text)]">Data Science</span>
+          </div>
+          <div className="flex items-center justify-between gap-4 rounded-xl bg-[var(--surface-2)] px-4 py-3">
+            <span>University</span>
+            <span className="font-medium text-[var(--text)]">IM|Sciences</span>
+          </div>
+          <div className="flex items-center justify-between gap-4 rounded-xl bg-[var(--surface-2)] px-4 py-3">
+            <span>Supervisor</span>
+            <span className="font-medium text-[var(--text)]">Prof. Dr. Awais Adnan</span>
           </div>
         </div>
-      ) : null}
+      </Dialog>
     </div>
   );
 }

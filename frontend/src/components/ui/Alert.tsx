@@ -10,9 +10,9 @@ interface AlertProps extends PropsWithChildren {
 
 export function Alert({ variant = "error", className, children }: AlertProps) {
   const styleMap = {
-    error: { backgroundColor: "#FEF3F2", borderColor: "#FDA29B", color: THEME.colors.error },
-    warning: { backgroundColor: "#FFFAEB", borderColor: "#FEC84B", color: THEME.colors.warning },
-    success: { backgroundColor: "#ECFDF3", borderColor: "#ABEFC6", color: THEME.colors.success },
+    error: { backgroundColor: "rgba(220,38,38,0.08)", borderColor: "rgba(220,38,38,0.18)", color: THEME.colors.error },
+    warning: { backgroundColor: "rgba(217,119,6,0.08)", borderColor: "rgba(217,119,6,0.18)", color: THEME.colors.warning },
+    success: { backgroundColor: "rgba(21,128,61,0.08)", borderColor: "rgba(21,128,61,0.18)", color: THEME.colors.success },
   }[variant];
 
   return (

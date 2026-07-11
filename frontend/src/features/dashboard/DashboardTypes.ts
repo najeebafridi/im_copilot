@@ -23,7 +23,7 @@ export interface DashboardScheduleItem {
   time: string;
   subject: string;
   room: string;
-  instructor: string;
+  instructor?: string;
 }
 
 export interface DashboardNotificationItem {

@@ -55,34 +55,33 @@ export function Landing() {
           <AppLogo />
           <PageHeader
             title="IM Copilot"
-            description="A clean academic assistant shell for students, administrators, and guest access in the university environment."
+            description="An intelligent academic assistant for students and guests in a university environment."
           />
-          <p className="max-w-2xl text-sm leading-6 text-slate-600">
-            This phase focuses on a polished entry experience, simple navigation, and clear access paths for every
-            user role. The academic intelligence layers will come later.
+          <p className="max-w-2xl text-sm leading-6 text-[var(--muted)]">
+            A polished entry experience, simple navigation, and clear access paths for every role.
           </p>
         </div>
 
-        <PageCard className="bg-slate-50/80">
+        <PageCard>
           <div className="space-y-4">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Choose access mode</p>
-              <h2 className="mt-2 text-xl font-semibold text-slate-900">Continue into the project</h2>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">Choose access mode</p>
+              <h2 className="mt-2 text-xl font-semibold text-[var(--text)]">Continue into the project</h2>
             </div>
 
             <div className="grid gap-4">
               {actions.map((item) => (
                 <div
                   key={item.title}
-                  className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-lg font-semibold text-white">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--accent)] text-lg font-semibold text-white">
                       {item.badge}
                     </div>
                     <div className="space-y-1">
-                      <h3 className="text-base font-semibold text-slate-900">{item.title}</h3>
-                      <p className="text-sm leading-6 text-slate-600">{item.description}</p>
+                      <h3 className="text-base font-semibold text-[var(--text)]">{item.title}</h3>
+                      <p className="text-sm leading-6 text-[var(--muted)]">{item.description}</p>
                     </div>
                   </div>
                   <Button variant="outline" type="button" onClick={item.onClick} className="sm:min-w-[180px]">

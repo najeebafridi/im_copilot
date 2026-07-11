@@ -38,12 +38,12 @@ export function MessageArea({ conversation, loading, isSending, compact = false 
           title="How can I help today?"
           description="Pick a suggestion or type your own question to begin."
         />
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-2">
-          {[
-            { label: "Attendance", prompt: "Explain my attendance." },
-            { label: "Today's Timetable", prompt: "Show today's timetable." },
-            { label: "Policies", prompt: "What is the attendance policy?" },
-            { label: "Registered Courses", prompt: "Show my registered courses." },
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-2">
+            {[
+              { label: "Attendance", prompt: "Explain my attendance." },
+              { label: "Today's Timetable", prompt: "Show today's timetable." },
+              { label: "Policies", prompt: "What is the attendance policy?" },
+              { label: "Registered Courses", prompt: "Show my registered courses." },
           ].map((item) => (
             <button
               key={item.label}
