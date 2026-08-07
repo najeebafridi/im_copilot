@@ -13,7 +13,7 @@
 [![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector_Search-111827?style=flat-square)](https://www.trychroma.com/)
 [![JWT](https://img.shields.io/badge/JWT-RBAC-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
 
-[Backend Documentation](./backend/README.md) · [Frontend Documentation](./frontend/README.md) · [Architecture Notes](./docs/IM_COPILOT_ARCHITECTURE_v2.md)
+[Backend Documentation](./backend/README.md) · [Frontend Documentation](./frontend/README.md)
 
 </div>
 
@@ -21,7 +21,7 @@
 
 ## Overview
 
-IMCopilot is a university information system designed around a simple principle: **the dashboard remains the primary academic workspace, while AI acts as an intelligent assistant rather than replacing the application itself**.
+IMCopilot is a university information system built around a simple principle: **the dashboard remains the primary academic workspace, while AI acts as an intelligent assistant rather than replacing the application itself**.
 
 The platform combines traditional academic portal functionality with two distinct AI/data paths:
 
@@ -40,9 +40,9 @@ IMCopilot was originated and technically led by **Najeeb Ullah**, who owned the 
 
 University information is usually fragmented across portals, PDFs, policy documents, databases, and administrative systems. IMCopilot explores how those sources can be brought together behind a single secure interface without giving an LLM unrestricted access to sensitive data.
 
-The design therefore separates:
+The system separates:
 
-- **unstructured knowledge** from documents,
+- **unstructured knowledge** from institutional documents,
 - **structured student data** from the academic database,
 - **authentication and authorization** from the AI layer,
 - and **routing/orchestration** from individual domain services.
@@ -90,7 +90,7 @@ This keeps the assistant useful while preserving clear security and application 
 
 ---
 
-## System Architecture
+## High-Level System Design
 
 ```mermaid
 flowchart LR
@@ -117,7 +117,7 @@ flowchart LR
     CHAT --> MEMORY[Conversation Memory + TTL Cleanup]
 ```
 
-The API layer remains intentionally thin. Business logic lives inside service modules, allowing authentication, retrieval, academic queries, LLM providers and conversation handling to evolve independently.
+The API layer remains intentionally thin. Business logic lives inside service modules so authentication, retrieval, academic queries, LLM providers and conversation handling can evolve independently.
 
 ---
 
@@ -136,8 +136,6 @@ The API layer remains intentionally thin. Business logic lives inside service mo
 | **Networking** | Axios |
 | **Testing** | Pytest, HTTPX |
 
-> The repository also contains a graph-style routing/orchestration layer. The architecture notes describe the intended LangGraph-oriented design; the current public implementation uses the repository's own router/service abstractions.
-
 ---
 
 ## Repository Structure
@@ -155,19 +153,17 @@ im_copilot/
 │   ├── tests/              # Backend tests
 │   ├── requirements.txt
 │   └── README.md
-├── frontend/
-│   ├── src/
-│   │   ├── app/            # Application bootstrap
-│   │   ├── components/     # Reusable UI and feature components
-│   │   ├── layouts/        # Student/admin application layouts
-│   │   ├── pages/          # Route-level pages
-│   │   ├── providers/      # Shared application state
-│   │   ├── routes/         # Public/protected routing
-│   │   └── config/         # Runtime configuration
-│   ├── package.json
-│   └── README.md
-└── docs/
-    └── IM_COPILOT_ARCHITECTURE_v2.md
+└── frontend/
+    ├── src/
+    │   ├── app/            # Application bootstrap
+    │   ├── components/     # Reusable UI and feature components
+    │   ├── layouts/        # Student/admin application layouts
+    │   ├── pages/          # Route-level pages
+    │   ├── providers/      # Shared application state
+    │   ├── routes/         # Public/protected routing
+    │   └── config/         # Runtime configuration
+    ├── package.json
+    └── README.md
 ```
 
 ---
@@ -235,7 +231,7 @@ IMCopilot intentionally avoids giving the language model direct unrestricted acc
 - Document-based RAG and structured academic queries use separate service paths.
 - JWT secrets and external provider credentials should be configured through environment variables rather than committed to source control.
 
-This separation is a central architectural decision, not an afterthought.
+This separation is a central engineering decision, not an afterthought.
 
 ---
 
@@ -263,16 +259,14 @@ Exact request/response schemas are documented automatically by FastAPI's OpenAPI
 
 ## Testing
 
-Backend tests can be run with:
+Backend tests:
 
 ```bash
 cd backend
 pytest
 ```
 
-The test suite covers backend behavior including authentication and service/API workflows.
-
-Frontend production compilation can be checked with:
+Frontend production build:
 
 ```bash
 cd frontend
@@ -283,17 +277,16 @@ npm run build
 
 ## Current Scope
 
-The current project intentionally focuses on a controlled academic-assistant workflow. The architecture excludes public self-registration and keeps university-managed identities as the trust boundary.
+The current project focuses on a controlled academic-assistant workflow. Public self-registration is intentionally excluded; university-managed identities remain the trust boundary.
 
-Potential future extensions described in the architecture include persistent conversation history, richer attachments, voice, streaming responses, additional university roles and expanded notification capabilities.
+Potential future extensions include persistent conversation history, richer attachments, voice, streaming responses, additional university roles and expanded notification capabilities.
 
 ---
 
 ## Documentation
 
 - **[Backend README](./backend/README.md)** — API, services, configuration, ingestion and testing
-- **[Frontend README](./frontend/README.md)** — React architecture, routes, configuration and development
-- **[Architecture Baseline](./docs/IM_COPILOT_ARCHITECTURE_v2.md)** — deeper design philosophy and subsystem boundaries
+- **[Frontend README](./frontend/README.md)** — React structure, routes, configuration and development
 
 ---
 
