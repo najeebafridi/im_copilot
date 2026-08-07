@@ -1,396 +1,350 @@
-# IM Copilot Backend
+# IMCopilot Backend
 
-Phase 4.5 of the IM Copilot project refines the reusable LLM service layer on top of the earlier backend phases.
+The IMCopilot backend is a **FastAPI-based academic assistant service** that combines authentication, student-scoped structured-data access, document retrieval, configurable LLM providers, conversation management and intent routing behind a single API.
 
-## Requirements
+This document focuses on the backend implementation. For the complete system overview, see the **[project README](../README.md)**.
 
-- Python 3.13.6
+---
+
+## Responsibilities
+
+The backend owns:
+
+- JWT authentication and role-based access control
+- student/admin identity and authorization
+- university document ingestion and vector indexing
+- semantic retrieval over institutional documents
+- structured academic queries against the application database
+- LLM provider abstraction and optional response caching
+- intent classification/routing between academic, policy and fallback paths
+- conversation IDs, message ownership and memory lifecycle
+- API schemas, validation, health checks and error handling
+
+The API layer is intentionally kept thin; most application behavior lives inside service modules.
+
+---
+
+## Stack
+
+| Area | Technologies |
+|---|---|
+| API | FastAPI, Uvicorn |
+| Configuration | Pydantic Settings, python-dotenv |
+| Database | SQLite, SQLAlchemy |
+| Authentication | JWT, python-jose, Passlib/Bcrypt |
+| Vector Search | ChromaDB |
+| Embeddings / Retrieval | sentence-transformers, RapidFuzz |
+| Document Parsing | pdfplumber, python-docx |
+| LLM Integration | Configurable provider abstraction, mock mode, response cache |
+| Testing | Pytest, HTTPX |
+
+---
+
+## Backend Structure
+
+```text
+backend/
+├── app/
+│   ├── api/
+│   │   ├── router.py
+│   │   └── v1/             # auth, chat, copilot, RAG, documents, academic, health
+│   ├── core/               # app factory, configuration, DB, security, logging
+│   ├── models/             # persistence/domain models
+│   ├── schemas/            # request and response models
+│   └── services/
+│       ├── academic/       # student-scoped academic data queries
+│       ├── conversation/   # conversation lifecycle and cleanup
+│       ├── copilot/        # grounded policy/document responses
+│       ├── llm/            # provider abstraction and validation
+│       └── router/         # intent routing/orchestration
+├── data/
+│   └── chroma/             # local vector store
+├── documents/              # source documents for ingestion
+├── processed/              # ingestion/debug outputs
+├── tests/
+├── init_db.py
+├── seed.py
+├── requirements.txt
+└── README.md
+```
+
+---
 
 ## Setup
 
-1. Create and activate a virtual environment.
-2. Install dependencies.
-3. Copy `.env.example` to `.env` if you want to override defaults.
+### Requirements
+
+- Python **3.13** recommended for the current project environment
+- `pip`
+
+### 1. Create a virtual environment
 
 ```bash
 cd backend
 python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-copy .env.example .env
 ```
+
+Activate it:
+
+```bash
+# Windows PowerShell
+.\.venv\Scripts\Activate.ps1
+
+# macOS / Linux
+source .venv/bin/activate
+```
+
+### 2. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Configure environment variables
+
+Copy the example environment file:
+
+```bash
+# Windows
+copy .env.example .env
+
+# macOS / Linux
+cp .env.example .env
+```
+
+The backend works in **mock LLM mode by default**, allowing local development without external provider credentials.
+
+Important settings include:
+
+```env
+DATABASE_URL=sqlite:///./im_copilot.db
+JWT_SECRET_KEY=replace-with-a-secure-secret
+MOCK_LLM=True
+LLM_PROVIDER=mock
+LLM_API_KEY=
+LLM_BASE_URL=
+LLM_MODEL=
+DOCUMENTS_PATH=documents
+CHROMA_PATH=data/chroma
+ROUTER_DEBUG=False
+```
+
+Do not commit real API keys or production JWT secrets.
+
+---
 
 ## Database
 
-Initialize the SQLite schema:
+Initialize the local database:
 
 ```bash
-cd backend
 python init_db.py
 ```
 
-Seed the demo data:
+Seed development/demo data when required:
 
 ```bash
-cd backend
 python seed.py
 ```
 
-## Documents Folder
+The default database configuration is SQLite:
 
-Place your source documents here:
+```text
+sqlite:///./im_copilot.db
+```
+
+The academic-query layer is designed to return data scoped to the authenticated user rather than exposing unrestricted database access.
+
+---
+
+## Run the API
+
+```bash
+uvicorn app.main:app --reload
+```
+
+The application runs at:
+
+```text
+http://127.0.0.1:8000
+```
+
+Interactive Swagger/OpenAPI documentation:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Health check:
+
+```text
+GET /api/v1/health
+```
+
+---
+
+## API Areas
+
+| Area | Purpose |
+|---|---|
+| `/api/v1/auth` | Login/authentication workflows |
+| `/api/v1/documents` | Document ingestion/index management |
+| `/api/v1/rag` | Retrieval and semantic search |
+| `/api/v1/llm` | LLM/provider test functionality |
+| `/api/v1/copilot` | Unified assistant routing and responses |
+| `/api/v1/academic` | Authenticated academic-data queries |
+| `/api/v1/chat` | Conversation lifecycle operations |
+| `/api/v1/health` | Service health |
+
+Use Swagger UI for the exact methods, schemas and current request/response contracts.
+
+---
+
+## Document Ingestion & RAG
+
+Source files are placed in:
 
 ```text
 backend/documents/
 ```
 
-Supported file types:
+Supported document types include:
 
-- `.pdf`
-- `.docx`
-- `.txt`
-- `.md`
+- PDF
+- DOCX
+- TXT
+- Markdown
 
-The ingestion pipeline writes debug outputs here:
-
-```text
-backend/processed/
-```
-
-The local Chroma database is stored here:
+The ingestion pipeline performs document loading, normalization, chunking, metadata creation, embedding and indexing. The vector database is stored locally under:
 
 ```text
 backend/data/chroma/
 ```
 
-## Phase 3 Manual Workflow
-
-1. Copy your documents into `backend/documents/`.
-2. Start the API:
-
-```bash
-cd backend
-.\.venv\Scripts\Activate.ps1
-uvicorn app.main:app --reload
-```
-
-3. Open Swagger UI:
+Processed/debug outputs can be written under:
 
 ```text
-http://127.0.0.1:8000/docs
+backend/processed/
 ```
 
-4. Run `POST /api/v1/documents/ingest`.
-5. Watch the terminal for progress prints such as:
+A typical local workflow is:
 
-```text
-[INGEST] Found ...
-[INGEST] Processing ...
-[INGEST] Completed ...
+1. Place university/policy documents in `documents/`.
+2. Start the FastAPI service.
+3. Trigger the document ingestion endpoint through Swagger.
+4. Inspect retrieval through the RAG search endpoint.
+5. Query the copilot and verify grounded sources in its response.
+
+---
+
+## Routing & Copilot Flow
+
+The unified copilot route separates different classes of request rather than sending every message directly to an LLM.
+
+```mermaid
+flowchart LR
+    Q[User Question] --> R[Router]
+    R -->|Greeting| G[Deterministic Greeting]
+    R -->|Academic| A[Academic Query Service]
+    R -->|Policy| P[RAG / Policy Service]
+    R -->|Unsupported| F[Controlled Fallback]
+
+    A --> DB[(Student-Scoped Database Data)]
+    P --> VS[(ChromaDB)]
+    P --> LLM[Configured LLM Provider]
 ```
 
-6. Check the generated debug files in `backend/processed/`.
-7. Run `GET /api/v1/rag/search?query=attendance requirement&k=5`.
+Academic requests require authentication. Policy/document requests use semantic retrieval. Unsupported questions are handled with a controlled fallback rather than unrestricted general-purpose answering.
 
-## Phase 4 Manual Workflow
+The architecture documentation describes a LangGraph-oriented target design; the current public implementation uses the repository's router and service abstractions directly.
 
-1. Put the LLM configuration into `.env`.
-2. Keep `MOCK_LLM=True` for safe local testing, or set it to `False` only when real provider credentials are ready.
-3. Start the API:
+---
 
-```bash
-cd backend
-.\.venv\Scripts\Activate.ps1
-uvicorn app.main:app --reload
-```
+## LLM Provider Layer
 
-4. Open Swagger:
+Runtime configuration supports provider abstraction through environment variables such as:
 
-```text
-http://127.0.0.1:8000/docs
-```
-
-5. Test the endpoint:
-
-```text
-POST /api/v1/llm/test
-```
-
-6. In the request body, send:
-
-```json
-{
-  "message": "Hello"
-}
-```
-
-7. When `MOCK_LLM=True`, expect a deterministic mock response and terminal prints like:
-
-```text
-[LLM] request started ...
-[LLM] request completed ...
-```
-
-## Phase 4.5 Manual Workflow
-
-1. Set the LLM provider in `.env`.
-2. Use `MOCK_LLM=True` for local testing, or set `MOCK_LLM=False` with valid provider credentials.
-3. Optional cache settings:
-
-```text
+```env
+MOCK_LLM=True
+LLM_PROVIDER=mock
+LLM_API_KEY=
+LLM_BASE_URL=
+LLM_MODEL=
+LLM_TEMPERATURE=0.7
+LLM_MAX_TOKENS=256
 ENABLE_CACHE=True
 CACHE_SIZE=100
 ```
 
-4. Optional provider selection:
+`MOCK_LLM=True` is useful for deterministic local development and tests without external API calls.
 
-```text
-LLM_PROVIDER=mock
-LLM_PROVIDER=openai
-LLM_PROVIDER=openrouter
-LLM_PROVIDER=grok
+The service layer also contains provider/configuration error handling so provider failures can be translated into consistent API responses.
+
+---
+
+## Authentication & Security
+
+Supported roles are centered around:
+
+- **Guest** — public policy/document access only
+- **Student** — authenticated access to the student's own academic data
+- **Administrator** — administrative application role
+
+Security boundaries include:
+
+- JWT bearer authentication
+- password hashing
+- backend-enforced RBAC
+- student-scoped academic responses
+- protected routes for personal data
+- separate policy/RAG and academic-data paths
+- conversation ownership checks
+
+The project intentionally does **not** treat the LLM as an authorization layer.
+
+---
+
+## Conversation Management
+
+The backend owns conversation state and identifiers. Current runtime settings include:
+
+```env
+CHAT_MEMORY_ENABLED=True
+CHAT_TTL_HOURS=24
+CHAT_MAX_CONVERSATIONS_PER_USER=30
+CHAT_MAX_MESSAGES_PER_CONVERSATION=200
+CHAT_CLEANUP_INTERVAL_MINUTES=30
+CHAT_MAX_TITLE_LENGTH=40
 ```
 
-5. Start the API:
+A cleanup scheduler starts with the FastAPI application lifecycle and removes expired in-memory conversation state according to configured limits.
+
+---
+
+## Testing
+
+Run all backend tests:
 
 ```bash
-cd backend
-.\.venv\Scripts\Activate.ps1
-uvicorn app.main:app --reload
-```
-
-6. Open Swagger:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-7. Call:
-
-```text
-POST /api/v1/llm/test
-```
-
-8. Send this body:
-
-```json
-{
-  "message": "Hello"
-}
-```
-
-9. The first identical request should hit the provider.
-10. Repeating the same request should use the cache when enabled.
-
-## Phase 5 Manual Workflow
-
-1. Make sure your documents have already been ingested in Phase 3.
-2. Start the backend:
-
-```bash
-cd backend
-.\.venv\Scripts\Activate.ps1
-uvicorn app.main:app --reload
-```
-
-3. Open Swagger:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-4. Test retrieval first if you want to inspect chunks:
-
-```text
-GET /api/v1/rag/search?query=attendance requirement&k=3
-```
-
-5. Test the new grounded chat endpoint:
-
-```text
-POST /api/v1/copilot/chat
-```
-
-6. Use this request body:
-
-```json
-{
-  "conversation_id": "demo-1",
-  "message": "What is the attendance requirement?"
-}
-```
-
-7. Expected behavior:
-
-```text
-- Relevant document chunks are retrieved
-- A structured prompt is built from the chunks
-- The configured LLM is called
-- The response is grounded in the supplied context
-- Source information is returned
-```
-
-8. Suggested manual questions:
-
-```text
-What is the attendance requirement?
-What documents are required for medical leave?
-What is the grading policy?
-```
-
-## Phase 6 Manual Workflow
-
-1. Start the backend:
-
-```bash
-cd backend
-.\.venv\Scripts\Activate.ps1
-uvicorn app.main:app --reload
-```
-
-2. Log in with a seeded student account:
-
-```text
-student_id: DS001
-password: password123
-```
-
-3. In Swagger, use `POST /api/v1/auth/login`.
-4. Click **Authorize** in Swagger and paste the bearer token.
-5. Test the academic endpoint:
-
-```text
-POST /api/v1/academic/chat
-```
-
-6. Example request body:
-
-```json
-{
-  "conversation_id": "demo-1",
-  "message": "What is my CGPA?"
-}
-```
-
-7. Suggested questions:
-
-```text
-What is my name?
-What is my semester?
-What is my program?
-What is my CGPA?
-What is my attendance?
-What is my attendance in DS301?
-What is my highest attendance?
-What is my lowest attendance?
-What are my enrolled courses?
-What are my grades?
-What is my timetable?
-```
-
-8. Expected behavior:
-
-```text
-- Only the authenticated student's records are returned
-- Unsupported questions return a clean error
-- Missing records return a clean error
-- The LLM explains only the returned database data
-- Sources include type=database and the table name
-```
-
-9. RBAC check:
-
-```text
-- Try the endpoint without a token: it should fail with 401
-- Try the endpoint with a valid token: it should succeed
-- The returned data should never belong to another student
-```
-
-## Phase 7A Manual Workflow
-
-1. Make sure the backend is started:
-
-```bash
-cd backend
-.\.venv\Scripts\Activate.ps1
-uvicorn app.main:app --reload
-```
-
-2. Open Swagger:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-3. Test the unified router endpoint:
-
-```text
-POST /api/v1/copilot/chat
-```
-
-4. Use these sample messages:
-
-```text
-Hi
-What is my CGPA?
-What is attendance policy?
-Who won the FIFA World Cup?
-```
-
-5. Expected routing:
-
-```text
-Hi -> Greeting Node
-What is my CGPA? -> Academic SQL Tool
-What is attendance policy? -> RAG Tool
-Who won the FIFA World Cup? -> Fallback Node
-```
-
-6. For academic questions like `What is my CGPA?`, click **Authorize** in Swagger and paste a valid bearer token first.
-7. To enable router debug mode, set this in `.env`:
-
-```text
-ROUTER_DEBUG=True
-```
-
-8. Restart the backend after changing `.env`.
-9. When debug mode is on, the response includes a `debug` block with normalized query, matched keywords, scores, selected intent, selected node, and routing time.
-10. When debug mode is off, the `debug` block is omitted completely.
-11. Check the terminal for router logs showing:
-
-```text
-[ROUTER] question=...
-[ACADEMIC] ...
-[COPILOT] ...
-```
-
-## Run
-
-```bash
-cd backend
-uvicorn app.main:app --reload
-```
-
-## Health Check
-
-Visit:
-
-```bash
-GET http://127.0.0.1:8000/api/v1/health
-```
-
-Expected response:
-
-```json
-{
-  "status": "ok",
-  "project": "IM Copilot"
-}
-```
-
-## Test
-
-```bash
-cd backend
 pytest
 ```
+
+For more verbose output:
+
+```bash
+pytest -v
+```
+
+The repository includes tests for areas such as authentication as well as backend API/service behavior.
+
+---
+
+## Development Notes
+
+- Keep API routes thin; business logic belongs in services.
+- Keep credentials and secrets in `.env`.
+- Use the backend as the source of truth for conversation IDs and ownership.
+- Do not let frontend code bypass backend authorization rules.
+- Extend domain functionality through services rather than adding logic directly to route handlers.
+
+For deeper architectural decisions, see **[`docs/IM_COPILOT_ARCHITECTURE_v2.md`](../docs/IM_COPILOT_ARCHITECTURE_v2.md)**.
